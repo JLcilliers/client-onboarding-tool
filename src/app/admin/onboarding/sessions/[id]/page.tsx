@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { onboardingSteps } from '@/lib/onboarding/steps';
 
@@ -41,54 +40,15 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   useEffect(() => {
     async function fetchSessionDetail() {
       try {
-        const supabase = createClient();
+        const response = await fetch(`/api/admin/onboarding/sessions/${id}`);
+        const data = await response.json();
 
-        // Fetch session
-        const { data: sessionData, error: sessionError } = await supabase
-          .from('onboarding_sessions')
-          .select(`
-            id,
-            token,
-            status,
-            current_step,
-            last_saved_at,
-            submitted_at,
-            created_at,
-            logo_url,
-            clients (
-              client_name,
-              primary_contact_name,
-              primary_contact_email
-            )
-          `)
-          .eq('id', id)
-          .single();
-
-        if (sessionError) {
-          throw sessionError;
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch session details');
         }
 
-        // Transform clients from array (Supabase join format) to single object
-        const transformedSession = {
-          ...sessionData,
-          clients: Array.isArray(sessionData.clients)
-            ? sessionData.clients[0] || null
-            : sessionData.clients
-        };
-        setSession(transformedSession);
-
-        // Fetch answers
-        const { data: answersData, error: answersError } = await supabase
-          .from('onboarding_answers')
-          .select('*')
-          .eq('session_id', id)
-          .order('updated_at', { ascending: true });
-
-        if (answersError) {
-          throw answersError;
-        }
-
-        setAnswers(answersData || []);
+        setSession(data.session);
+        setAnswers(data.answers || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch session details');
       } finally {

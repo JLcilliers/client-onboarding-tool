@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function NewOnboardingPage() {
   const [clientName, setClientName] = useState('');
@@ -26,105 +24,48 @@ export default function NewOnboardingPage() {
     }
   };
 
-  const generateToken = () => {
-    // Generate a secure random token
-    const array = new Uint8Array(32);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const supabase = createClient();
-
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        throw new Error('You must be logged in to create an onboarding session');
-      }
-
-      // Ensure agency account exists
-      const { data: existingAgency } = await supabase
-        .from('agency_accounts')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (!existingAgency) {
-        // Create agency account
-        const { error: agencyError } = await supabase
-          .from('agency_accounts')
-          .insert({
-            id: user.id,
-            agency_name: user.email?.split('@')[0] || 'My Agency',
-          });
-
-        if (agencyError) {
-          console.error('Agency creation error:', agencyError);
-        }
-      }
-
-      // Create client
-      const clientId = uuidv4();
-      const { error: clientError } = await supabase
-        .from('clients')
-        .insert({
-          id: clientId,
-          agency_id: user.id,
-          client_name: clientName,
-          primary_contact_name: contactName,
-          primary_contact_email: contactEmail,
-        });
-
-      if (clientError) {
-        throw new Error('Failed to create client: ' + clientError.message);
-      }
-
-      // Create session with token
-      const sessionId = uuidv4();
-      const token = generateToken();
-      let logoPath = null;
-
-      // Upload logo if provided
+      // Convert logo to base64 if provided
+      let logoBase64 = null;
+      let logoFileName = null;
       if (logo) {
-        const fileExt = logo.name.split('.').pop();
-        logoPath = `${user.id}/${sessionId}/logo.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('onboarding-logos')
-          .upload(logoPath, logo);
-
-        if (uploadError) {
-          console.error('Logo upload error:', uploadError);
-          // Continue without logo
-          logoPath = null;
-        }
+        logoFileName = logo.name;
+        logoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logo);
+        });
       }
 
-      // Create onboarding session
-      const { error: sessionError } = await supabase
-        .from('onboarding_sessions')
-        .insert({
-          id: sessionId,
-          agency_id: user.id,
-          client_id: clientId,
-          token,
-          status: 'draft',
-          current_step: 0,
-          logo_path: logoPath,
-        });
+      // Call admin API to create session
+      const response = await fetch('/api/admin/onboarding/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clientName,
+          contactName,
+          contactEmail,
+          logoBase64,
+          logoFileName,
+        }),
+      });
 
-      if (sessionError) {
-        throw new Error('Failed to create session: ' + sessionError.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create session');
       }
 
       // Generate the onboarding URL
       const baseUrl = window.location.origin;
-      setGeneratedUrl(`${baseUrl}/onboarding/${token}`);
+      setGeneratedUrl(`${baseUrl}/onboarding/${data.token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

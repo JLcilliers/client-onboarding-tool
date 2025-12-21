@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 interface Session {
@@ -26,37 +25,14 @@ export default function SessionsPage() {
   useEffect(() => {
     async function fetchSessions() {
       try {
-        const supabase = createClient();
+        const response = await fetch('/api/admin/onboarding/sessions');
+        const data = await response.json();
 
-        const { data, error } = await supabase
-          .from('onboarding_sessions')
-          .select(`
-            id,
-            token,
-            status,
-            current_step,
-            last_saved_at,
-            submitted_at,
-            created_at,
-            clients (
-              client_name,
-              primary_contact_email
-            )
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch sessions');
         }
 
-        // Transform clients from array (Supabase join format) to single object
-        const transformedData = (data || []).map(session => ({
-          ...session,
-          clients: Array.isArray(session.clients)
-            ? session.clients[0] || null
-            : session.clients
-        }));
-        setSessions(transformedData);
+        setSessions(data.sessions || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch sessions');
       } finally {
