@@ -485,9 +485,9 @@ export function validateStepData(stepKey: string, data: Record<string, unknown>)
   }
 
   const errors: Record<string, string> = {};
-  result.error.errors.forEach(err => {
-    const path = err.path.join('.');
-    errors[path] = err.message;
+  result.error.issues.forEach(issue => {
+    const path = issue.path.join('.');
+    errors[path] = issue.message;
   });
 
   return { success: false, errors };
