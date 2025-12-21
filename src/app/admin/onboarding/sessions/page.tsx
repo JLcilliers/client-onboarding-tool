@@ -49,7 +49,14 @@ export default function SessionsPage() {
           throw error;
         }
 
-        setSessions(data || []);
+        // Transform clients from array (Supabase join format) to single object
+        const transformedData = (data || []).map(session => ({
+          ...session,
+          clients: Array.isArray(session.clients)
+            ? session.clients[0] || null
+            : session.clients
+        }));
+        setSessions(transformedData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch sessions');
       } finally {

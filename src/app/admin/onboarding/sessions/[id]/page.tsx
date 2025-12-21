@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { onboardingSteps } from '@/lib/onboarding/steps';
 
+interface ClientInfo {
+  client_name: string;
+  primary_contact_name: string | null;
+  primary_contact_email: string | null;
+}
+
 interface SessionDetail {
   id: string;
   token: string;
@@ -14,11 +20,7 @@ interface SessionDetail {
   submitted_at: string | null;
   created_at: string;
   logo_url: string | null;
-  clients: {
-    client_name: string;
-    primary_contact_name: string | null;
-    primary_contact_email: string | null;
-  };
+  clients: ClientInfo | null;
 }
 
 interface Answer {
@@ -66,7 +68,14 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
           throw sessionError;
         }
 
-        setSession(sessionData);
+        // Transform clients from array (Supabase join format) to single object
+        const transformedSession = {
+          ...sessionData,
+          clients: Array.isArray(sessionData.clients)
+            ? sessionData.clients[0] || null
+            : sessionData.clients
+        };
+        setSession(transformedSession);
 
         // Fetch answers
         const { data: answersData, error: answersError } = await supabase
