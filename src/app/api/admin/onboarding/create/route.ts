@@ -17,23 +17,38 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceRoleClient();
 
+    // Use a fixed admin agency ID - create if doesn't exist
+    const ADMIN_AGENCY_ID = '00000000-0000-0000-0000-000000000001';
+
+    // Check if admin agency exists, create if not
+    const { data: existingAgency } = await supabase
+      .from('agency_accounts')
+      .select('id')
+      .eq('id', ADMIN_AGENCY_ID)
+      .single();
+
+    if (!existingAgency) {
+      const { error: agencyError } = await supabase
+        .from('agency_accounts')
+        .insert({
+          id: ADMIN_AGENCY_ID,
+          agency_name: 'Admin Agency',
+        });
+
+      if (agencyError) {
+        console.error('Agency creation error:', agencyError);
+        return NextResponse.json(
+          { error: 'Failed to create agency: ' + agencyError.message },
+          { status: 500 }
+        );
+      }
+    }
+
     // Generate IDs and token
-    const agencyId = uuidv4();
+    const agencyId = ADMIN_AGENCY_ID;
     const clientId = uuidv4();
     const sessionId = uuidv4();
     const token = crypto.randomBytes(32).toString('hex');
-
-    // Create agency account (use a placeholder for admin-created sessions)
-    const { error: agencyError } = await supabase
-      .from('agency_accounts')
-      .insert({
-        id: agencyId,
-        agency_name: 'Admin Agency',
-      });
-
-    if (agencyError && !agencyError.message.includes('duplicate')) {
-      console.error('Agency creation error:', agencyError);
-    }
 
     // Create client
     const { error: clientError } = await supabase
