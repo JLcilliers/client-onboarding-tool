@@ -40,18 +40,16 @@ function hasAnyString(answers: Record<string, unknown> | undefined, keys: string
   });
 }
 
-function isTrue(answers: Record<string, unknown> | undefined, keys: string[]): boolean {
-  if (!answers) return false;
-  return keys.some(key => {
-    const value = answers[key];
-    return value === true || value === 'yes' || value === 'true';
-  });
-}
-
 function hasValue(answers: Record<string, unknown> | undefined, key: string, targetValue: string): boolean {
   if (!answers) return false;
   const value = answers[key];
   return value === targetValue;
+}
+
+function hasGrantedValue(answers: Record<string, unknown> | undefined, key: string): boolean {
+  if (!answers) return false;
+  const value = answers[key];
+  return value === 'granted' || value === 'will_do';
 }
 
 // =============================================
@@ -120,6 +118,7 @@ export const ACCESS_ITEMS: AccessItem[] = [
 
 // =============================================
 // ACCESS CHECK FUNCTIONS
+// Updated to use new step keys
 // =============================================
 
 const accessCheckers: Record<AccessKey, {
@@ -128,82 +127,108 @@ const accessCheckers: Record<AccessKey, {
 }> = {
   wordpress: {
     isRelevant: (answersByStep) => {
-      const tech = answersByStep['technical_assets'];
+      const platform = answersByStep['website_platform'];
       // Relevant if using WordPress
-      if (!tech) return true; // Default to relevant
-      return hasValue(tech, 'is_wordpress', 'yes') || hasValue(tech, 'is_wordpress', 'not_sure') || !tech['is_wordpress'];
+      if (!platform) return true; // Default to relevant
+      return hasValue(platform, 'website_platform', 'wordpress') ||
+             hasValue(platform, 'website_platform', 'not_sure') ||
+             !platform['website_platform'];
     },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['wordpress_access_granted']);
+      const access = answersByStep['website_access'];
+      return hasGrantedValue(access, 'wordpress_access_granted') ||
+             hasValue(access, 'wordpress_access_granted', 'not_wordpress');
     },
   },
   domain: {
     isRelevant: (answersByStep) => {
-      const tech = answersByStep['technical_assets'];
+      const domain = answersByStep['domain_website'];
       // Relevant if they own their domain
-      if (!tech) return true;
-      return hasValue(tech, 'owns_domain', 'yes') || hasValue(tech, 'owns_domain', 'not_sure') || !tech['owns_domain'];
+      if (!domain) return true;
+      return hasValue(domain, 'owns_domain', 'yes') ||
+             hasValue(domain, 'owns_domain', 'not_sure') ||
+             !domain['owns_domain'];
     },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['domain_registrar_access']);
+      const access = answersByStep['website_access'];
+      return hasGrantedValue(access, 'domain_registrar_access') ||
+             hasValue(access, 'domain_registrar_access', 'will_share_login');
     },
   },
   dns: {
     isRelevant: (answersByStep) => {
-      const tech = answersByStep['technical_assets'];
+      const domain = answersByStep['domain_website'];
       // Relevant if they control DNS
-      if (!tech) return true;
-      return hasValue(tech, 'controls_dns', 'yes') || hasValue(tech, 'controls_dns', 'not_sure') || !tech['controls_dns'];
+      if (!domain) return true;
+      return hasValue(domain, 'controls_dns', 'yes') ||
+             hasValue(domain, 'controls_dns', 'not_sure') ||
+             !domain['controls_dns'];
     },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['dns_access_granted']);
+      const access = answersByStep['website_access'];
+      return hasGrantedValue(access, 'dns_access_granted') ||
+             hasValue(access, 'dns_access_granted', 'same_as_domain');
     },
   },
   gsc: {
     isRelevant: () => true, // Always relevant
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['gsc_access_granted']);
+      const access = answersByStep['google_access'];
+      return hasGrantedValue(access, 'gsc_access_granted') ||
+             hasValue(access, 'gsc_access_granted', 'not_setup');
     },
   },
   ga: {
-    isRelevant: () => true, // Always relevant
+    isRelevant: (answersByStep) => {
+      const access = answersByStep['google_access'];
+      // Only relevant if they have GA set up
+      return hasValue(access, 'has_google_analytics', 'yes') ||
+             hasValue(access, 'has_google_analytics', 'not_sure') ||
+             !access || !access['has_google_analytics'];
+    },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['ga_access_granted']);
+      const access = answersByStep['google_access'];
+      return hasGrantedValue(access, 'ga_access_granted') ||
+             hasValue(access, 'has_google_analytics', 'no');
     },
   },
   gbp: {
     isRelevant: (answersByStep) => {
-      const gbp = answersByStep['google_business_profile'];
+      const gbp = answersByStep['google_business'];
       // Relevant if they have a GBP
       if (!gbp) return true;
-      return hasValue(gbp, 'has_gbp', 'yes') || hasValue(gbp, 'has_gbp', 'not_sure') || !gbp['has_gbp'];
+      return hasValue(gbp, 'has_gbp', 'yes') ||
+             hasValue(gbp, 'has_gbp', 'not_sure') ||
+             !gbp['has_gbp'];
     },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['gbp_access_granted']);
+      const access = answersByStep['google_access'];
+      return hasGrantedValue(access, 'gbp_access_granted') ||
+             hasValue(access, 'gbp_access_granted', 'no_gbp');
     },
   },
   youtube: {
-    isRelevant: () => false, // Optional - only relevant if they have YouTube content
+    isRelevant: (answersByStep) => {
+      const access = answersByStep['other_access'];
+      // Only relevant if they have YouTube
+      return hasValue(access, 'has_youtube', 'yes');
+    },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['youtube_access_granted', 'other_video_platforms']);
+      const access = answersByStep['other_access'];
+      return hasGrantedValue(access, 'youtube_access_granted') ||
+             hasValue(access, 'has_youtube', 'no');
     },
   },
   lsa: {
     isRelevant: (answersByStep) => {
-      const seo = answersByStep['seo_targets'];
-      // Relevant if they provide attorney imagery for LSA
-      return hasAnyString(seo, ['attorney_imagery_lsa']);
+      const access = answersByStep['other_access'];
+      // Relevant if they have LSA
+      return hasValue(access, 'has_lsa', 'yes');
     },
     isProvided: (answersByStep) => {
-      const access = answersByStep['technical_access'];
-      return hasAnyString(access, ['lsa_customer_ids']);
+      const access = answersByStep['other_access'];
+      return hasAnyString(access, ['lsa_customer_ids']) ||
+             hasValue(access, 'has_lsa', 'no');
     },
   },
 };

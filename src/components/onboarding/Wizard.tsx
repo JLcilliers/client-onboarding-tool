@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { onboardingSteps, validateStepData, OnboardingStep } from '@/lib/onboarding/steps';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { onboardingSteps, validateStepData, getMissingRequiredFields } from '@/lib/onboarding/steps';
 import StepRenderer from './StepRenderer';
 import SpinnerInterstitial from './SpinnerInterstitial';
 
@@ -28,6 +28,11 @@ export default function Wizard({
     });
     return initial;
   });
+  const [completedStepsState, setCompletedStepsState] = useState<string[]>(() => {
+    return Object.entries(initialAnswers)
+      .filter(([, value]) => value.completed)
+      .map(([key]) => key);
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
@@ -38,10 +43,29 @@ export default function Wizard({
   const currentStep = onboardingSteps[currentStepIndex];
   const stepAnswers = answers[currentStep?.key] || {};
 
-  // Track completed steps
-  const completedSteps = Object.entries(initialAnswers)
-    .filter(([, value]) => value.completed)
-    .map(([key]) => key);
+  // Calculate missing required fields
+  const missingFields = useMemo(() => {
+    return getMissingRequiredFields(answers);
+  }, [answers]);
+
+  // Group missing fields by step
+  const missingFieldsByStep = useMemo(() => {
+    const grouped: Record<string, { stepTitle: string; stepIndex: number; fields: { fieldName: string; fieldLabel: string }[] }> = {};
+    missingFields.forEach((field) => {
+      if (!grouped[field.stepKey]) {
+        grouped[field.stepKey] = {
+          stepTitle: field.stepTitle,
+          stepIndex: field.stepIndex,
+          fields: [],
+        };
+      }
+      grouped[field.stepKey].fields.push({
+        fieldName: field.fieldName,
+        fieldLabel: field.fieldLabel,
+      });
+    });
+    return grouped;
+  }, [missingFields]);
 
   // Handle field change
   const handleFieldChange = useCallback((name: string, value: unknown) => {
@@ -88,6 +112,10 @@ export default function Wizard({
         throw new Error(data.error || 'Failed to save');
       }
 
+      if (completed && !completedStepsState.includes(currentStep.key)) {
+        setCompletedStepsState((prev) => [...prev, currentStep.key]);
+      }
+
       setLastSaved(new Date());
       return true;
     } catch (error) {
@@ -100,11 +128,13 @@ export default function Wizard({
 
   // Handle next step
   const handleNext = async () => {
-    // Validate current step
-    const validation = validateStepData(currentStep.key, stepAnswers);
-    if (!validation.success && validation.errors) {
-      setErrors(validation.errors);
-      return;
+    // Skip validation for review step
+    if (!currentStep.isReviewStep) {
+      const validation = validateStepData(currentStep.key, stepAnswers);
+      if (!validation.success && validation.errors) {
+        setErrors(validation.errors);
+        return;
+      }
     }
 
     // Show spinner
@@ -186,7 +216,7 @@ export default function Wizard({
   // Auto-save on blur (debounced)
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (Object.keys(stepAnswers).length > 0 && !isSaving) {
+      if (Object.keys(stepAnswers).length > 0 && !isSaving && !currentStep.isReviewStep) {
         saveStep(false);
       }
     }, 3000);
@@ -194,14 +224,23 @@ export default function Wizard({
     return () => clearTimeout(timeout);
   }, [stepAnswers]);
 
-  // Navigate to step
-  const navigateToStep = (index: number) => {
-    if (index < currentStepIndex || completedSteps.includes(onboardingSteps[index]?.key)) {
-      setCurrentStepIndex(index);
-      setErrors({});
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Navigate to step - allow navigation to any step
+  const navigateToStep = async (index: number) => {
+    if (index === currentStepIndex) return;
+
+    // Save current step progress (not marked as completed) before navigating
+    if (Object.keys(stepAnswers).length > 0 && !currentStep.isReviewStep) {
+      await saveStep(false);
     }
+
+    setCurrentStepIndex(index);
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Calculate progress percentage
+  const progressPercentage = ((currentStepIndex + 1) / onboardingSteps.length) * 100;
+  const completedPercentage = (completedStepsState.length / onboardingSteps.length) * 100;
 
   // If submitted, show thank you screen
   if (isSubmitted) {
@@ -239,6 +278,82 @@ export default function Wizard({
     );
   }
 
+  // Render "Almost There" review step
+  const renderAlmostThereStep = () => {
+    const hasMissingFields = missingFields.length > 0;
+
+    return (
+      <div className="space-y-6">
+        {hasMissingFields ? (
+          <>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#F5A524]/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-[#F5A524]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-[#0B0B0B] mb-2">
+                A few things need your attention
+              </h2>
+              <p className="text-[#6B6B6B]">
+                Please complete the following required fields before submitting.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {Object.entries(missingFieldsByStep).map(([stepKey, { stepTitle, stepIndex, fields }]) => (
+                <div
+                  key={stepKey}
+                  className="bg-[#FEF3C7] border border-[#F5A524]/30 rounded-lg p-4 cursor-pointer hover:bg-[#FDE68A] transition-colors"
+                  onClick={() => navigateToStep(stepIndex)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-[#92400E] mb-1">{stepTitle}</h3>
+                      <ul className="text-sm text-[#B45309]">
+                        {fields.map((field) => (
+                          <li key={field.fieldName} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-[#F5A524] rounded-full"></span>
+                            {field.fieldLabel}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <svg className="w-5 h-5 text-[#92400E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-[#25DC7F]/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-[#25DC7F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-[#0B0B0B] mb-2">
+                All required fields are complete!
+              </h2>
+              <p className="text-[#6B6B6B]">
+                You&apos;re ready to proceed to the final step.
+              </p>
+            </div>
+
+            <div className="bg-[#ECFDF5] border border-[#25DC7F]/30 rounded-lg p-6 text-center">
+              <p className="text-[#065F46] font-medium">
+                Click &quot;Next&quot; to review and submit your onboarding information.
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Spinner Interstitial */}
@@ -260,54 +375,46 @@ export default function Wizard({
             </div>
           </div>
 
-          {/* Progress Stepper */}
+          {/* Progress Bar & Step Navigator */}
           <div className="max-w-6xl mx-auto px-6 pb-6">
-            <div className="flex items-start justify-between overflow-x-auto">
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-sm text-[#A0A0A0] mb-2">
+                <span>Step {currentStepIndex + 1} of {onboardingSteps.length}</span>
+                <span>{Math.round(completedPercentage)}% complete</span>
+              </div>
+              <div className="h-2 bg-[#1A2A1F] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#25DC7F] transition-all duration-300"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Step Dots Navigator */}
+            <div className="flex items-center justify-center gap-1 flex-wrap">
               {onboardingSteps.map((step, index) => {
-                const isCompleted = index < currentStepIndex || completedSteps.includes(step.key);
+                const isCompleted = completedStepsState.includes(step.key);
                 const isCurrent = index === currentStepIndex;
-                const isClickable = index < currentStepIndex || completedSteps.includes(step.key);
 
                 return (
-                  <div key={step.key} className="flex flex-col items-center flex-1 min-w-0 relative">
-                    {/* Connector line */}
-                    {index > 0 && (
-                      <div
-                        className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 ${
-                          index <= currentStepIndex ? 'bg-[#25DC7F]' : 'bg-[#1A2A1F]'
-                        }`}
-                        style={{ zIndex: 0 }}
-                      />
-                    )}
-
-                    {/* Step Circle */}
-                    <button
-                      onClick={() => isClickable && navigateToStep(index)}
-                      disabled={!isClickable}
-                      className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                        isCompleted
-                          ? 'bg-[#0F1A14] border-2 border-[#25DC7F] text-[#25DC7F] cursor-pointer'
-                          : isCurrent
-                          ? 'bg-[#0F1A14] border-2 border-[#25DC7F] text-white'
-                          : 'bg-[#1A2A1F] border-2 border-[#1A2A1F] text-[#6B6B6B] cursor-not-allowed'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        index + 1
-                      )}
-                    </button>
-
-                    {/* Step Label */}
-                    <span className={`mt-2 text-[10px] font-semibold uppercase tracking-wider text-center px-1 ${
-                      isCurrent ? 'text-[#25DC7F]' : isCompleted ? 'text-[#569077]' : 'text-[#6B6B6B]'
-                    }`}>
-                      {step.shortTitle || step.title.split(' ')[0]}
+                  <button
+                    key={step.key}
+                    onClick={() => navigateToStep(index)}
+                    className={`group relative w-3 h-3 rounded-full transition-all cursor-pointer ${
+                      isCompleted
+                        ? 'bg-[#25DC7F]'
+                        : isCurrent
+                        ? 'bg-white ring-2 ring-[#25DC7F]'
+                        : 'bg-[#569077] hover:bg-[#25DC7F]/50'
+                    }`}
+                    title={step.title}
+                  >
+                    {/* Tooltip */}
+                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0B0B0B] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                      {step.title}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -315,19 +422,19 @@ export default function Wizard({
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8">
+        <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
           {/* Step Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold text-[#0B0B0B] mb-2">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-extrabold text-[#0B0B0B] mb-1">
               {currentStep.title}
             </h1>
-            <p className="text-[#6B6B6B]">
+            <p className="text-[#6B6B6B] text-sm">
               {currentStep.description}
             </p>
           </div>
 
           {/* Content Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-[#E6E8EA] p-8">
+          <div className="bg-white rounded-xl shadow-sm border border-[#E6E8EA] p-6">
             {/* Error Banner */}
             {saveError && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -347,7 +454,9 @@ export default function Wizard({
             )}
 
             {/* Step Content */}
-            {currentStep && (
+            {currentStep.isReviewStep ? (
+              renderAlmostThereStep()
+            ) : (
               <StepRenderer
                 step={currentStep}
                 values={stepAnswers}
