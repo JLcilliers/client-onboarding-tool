@@ -18,309 +18,725 @@ export interface OnboardingField {
 export interface OnboardingStep {
   key: string;
   title: string;
+  shortTitle: string;
   description: string;
   fields: OnboardingField[];
   estimatedTime?: string;
 }
 
 // =============================================
-// STEP DEFINITIONS
+// STEP DEFINITIONS - Based on Clixsy Onboarding Document
 // =============================================
 
 export const onboardingSteps: OnboardingStep[] = [
+  // -----------------------------------------------
+  // SECTION 1: PRIMARY & SECONDARY CONTACT INFORMATION
+  // -----------------------------------------------
   {
-    key: 'business_overview',
-    title: 'Business Overview',
-    description: 'Tell us about your business so we can better understand your needs.',
+    key: 'contact_information',
+    title: 'Contact Information',
+    shortTitle: 'CONTACT',
+    description: 'Provide details for your main contacts so we can communicate effectively.',
+    estimatedTime: '4 min',
+    fields: [
+      // Main Point of Contact (Decision Maker)
+      {
+        name: 'main_contact_name',
+        label: 'Main Point of Contact (Decision Maker) - Full Name',
+        type: 'text',
+        required: true,
+        helpText: 'This should be a single person with ultimate authority over the project.'
+      },
+      { name: 'main_contact_title', label: 'Title/Role', type: 'text', required: true },
+      { name: 'main_contact_email', label: 'Email Address', type: 'email', required: true },
+      { name: 'main_contact_phone', label: 'Best Contact Number', type: 'tel', required: true },
+
+      // Secondary Point of Contact
+      {
+        name: 'secondary_contact_name',
+        label: 'Secondary Contact - Full Name',
+        type: 'text',
+        helpText: 'Authorized to speak on behalf of the firm for minor matters.'
+      },
+      { name: 'secondary_contact_email', label: 'Secondary Contact - Email Address', type: 'email' },
+      { name: 'secondary_contact_phone', label: 'Secondary Contact - Best Contact Number', type: 'tel' },
+
+      // Technical/IT Contact
+      {
+        name: 'tech_contact_name',
+        label: 'Technical/IT Contact - Full Name',
+        type: 'text',
+        helpText: 'The dedicated individual for technical or IT-related inquiries.'
+      },
+      { name: 'tech_contact_email', label: 'Technical/IT Contact - Email Address', type: 'email' },
+      { name: 'tech_contact_phone', label: 'Technical/IT Contact - Direct Phone Number', type: 'tel' },
+
+      // Dedicated Agency/Vendor Contact
+      {
+        name: 'previous_agency_contact',
+        label: 'Previous Agency/Vendor Contact',
+        type: 'textarea',
+        placeholder: 'Name, email, phone',
+        helpText: 'For transitioning from a previous agency - the point of contact for technical hand-off questions.'
+      },
+    ]
+  },
+
+  // -----------------------------------------------
+  // SECTION 2: DETAILED COMPANY & BUSINESS PROFILE
+  // -----------------------------------------------
+  {
+    key: 'business_profile',
+    title: 'Company & Business Profile',
+    shortTitle: 'PROFILE',
+    description: 'Tell us about your business so we can better understand your firm.',
     estimatedTime: '5 min',
     fields: [
-      { name: 'legal_business_name', label: 'Legal Business Name', type: 'text', required: true, placeholder: 'ABC Company Ltd' },
-      { name: 'trading_name', label: 'Trading Name (if different)', type: 'text', placeholder: 'ABC Co' },
-      { name: 'website_url', label: 'Website URL', type: 'url', required: true, placeholder: 'https://example.com' },
-      { name: 'primary_contact_name', label: 'Primary Contact Name', type: 'text', required: true },
-      { name: 'primary_contact_email', label: 'Primary Contact Email', type: 'email', required: true },
-      { name: 'primary_contact_phone', label: 'Primary Contact Phone', type: 'tel' },
-      { name: 'other_stakeholders', label: 'Other Stakeholders', type: 'textarea', placeholder: 'Name, Role, Email (one per line)', helpText: 'List any other team members who should be involved' },
-      { name: 'physical_address', label: 'Physical Address', type: 'textarea' },
-      { name: 'service_areas', label: 'Service Areas', type: 'text', placeholder: 'e.g., Greater London, UK-wide, Global' },
-      { name: 'timezone', label: 'Timezone', type: 'select', options: [
-        { value: 'gmt', label: 'GMT (London)' },
-        { value: 'est', label: 'EST (New York)' },
-        { value: 'pst', label: 'PST (Los Angeles)' },
-        { value: 'cet', label: 'CET (Central Europe)' },
-        { value: 'sast', label: 'SAST (South Africa)' },
-        { value: 'other', label: 'Other' }
-      ]},
-      { name: 'business_description', label: 'What do you sell and to whom?', type: 'textarea', required: true, helpText: 'Brief description of your products/services and target audience' },
-      { name: 'unique_selling_points', label: 'Unique Selling Points', type: 'textarea', helpText: 'What makes you different from competitors?' },
-      { name: 'competitor_1', label: 'Competitor 1 (URL)', type: 'url', placeholder: 'https://competitor1.com' },
-      { name: 'competitor_2', label: 'Competitor 2 (URL)', type: 'url', placeholder: 'https://competitor2.com' },
-      { name: 'competitor_3', label: 'Competitor 3 (URL)', type: 'url', placeholder: 'https://competitor3.com' },
+      { name: 'business_name', label: 'Business Name', type: 'text', required: true },
+      { name: 'website_url', label: 'Main Website URL', type: 'url', required: true, placeholder: 'https://example.com' },
+      { name: 'owner_names', label: 'Owner/Main Partner(s) Full Name(s)', type: 'textarea', placeholder: 'List all owners/partners, one per line' },
+      {
+        name: 'physical_address',
+        label: 'Physical Company Address',
+        type: 'textarea',
+        required: true,
+        helpText: 'Provide the exact address as it appears on your Google Business Profile (GBP).'
+      },
+      { name: 'move_in_date', label: 'Move-In Date at Current Location', type: 'text', placeholder: 'e.g., January 2020' },
+      { name: 'business_phone', label: 'Main Business Phone Number', type: 'tel', required: true },
+      { name: 'year_founded', label: 'Year the Firm was Founded', type: 'text', placeholder: 'e.g., 2015' },
+      { name: 'languages_spoken', label: 'Languages Spoken at the Firm', type: 'text', placeholder: 'e.g., English, Spanish' },
+
+      // Legal & Tax Identification
+      { name: 'owner_license_number', label: 'Owner License Number', type: 'text' },
+      { name: 'license_issue_date', label: 'License Issue Date', type: 'text', placeholder: 'e.g., March 2018' },
+      { name: 'ein_number', label: 'EIN (Employer Identification Number)', type: 'text', placeholder: 'XX-XXXXXXX' },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 3: VISION, STRATEGY, & KPIs
+  // -----------------------------------------------
   {
-    key: 'goals_kpis',
-    title: 'Goals & KPIs',
-    description: 'Help us understand what success looks like for your business.',
-    estimatedTime: '4 min',
+    key: 'vision_strategy',
+    title: 'Vision, Strategy, & KPIs',
+    shortTitle: 'VISION',
+    description: 'Help us understand what success looks like for your firm.',
+    estimatedTime: '5 min',
     fields: [
-      { name: 'primary_goal', label: 'Primary Goal', type: 'select', required: true, options: [
-        { value: 'leads', label: 'Generate Leads' },
-        { value: 'sales', label: 'Increase Sales' },
-        { value: 'calls', label: 'Phone Calls' },
-        { value: 'bookings', label: 'Appointments/Bookings' },
-        { value: 'store_visits', label: 'Store Visits' },
-        { value: 'brand_awareness', label: 'Brand Awareness' },
-        { value: 'other', label: 'Other' }
-      ]},
-      { name: 'secondary_goals', label: 'Secondary Goals', type: 'textarea', placeholder: 'List any additional objectives' },
-      { name: 'target_monthly_leads', label: 'Target Monthly Leads', type: 'text', placeholder: 'e.g., 50' },
-      { name: 'target_cpa', label: 'Target Cost Per Acquisition', type: 'text', placeholder: 'e.g., $50' },
-      { name: 'target_roas', label: 'Target ROAS', type: 'text', placeholder: 'e.g., 4:1' },
-      { name: 'current_baseline', label: 'Current Performance Baseline', type: 'textarea', helpText: 'What are your current numbers? (if known)' },
-      { name: 'priority_products', label: 'Priority Products/Services', type: 'textarea', helpText: 'Which offerings should we focus on first?' },
-      { name: 'seasonality', label: 'Seasonality Notes', type: 'textarea', placeholder: 'e.g., Peak in Q4, slow in January' },
-      { name: 'target_markets', label: 'Target Markets', type: 'text', placeholder: 'e.g., UK, USA, Australia' },
+      {
+        name: 'success_definition',
+        label: 'Success Definition (12-Month Outlook)',
+        type: 'textarea',
+        required: true,
+        helpText: 'Imagine yourself 12 months from now—what results would make you completely satisfied with our progress?'
+      },
+      {
+        name: 'magic_wand_outcome',
+        label: 'The "Magic Wand" Outcome',
+        type: 'textarea',
+        helpText: 'What would the perfect outcome of our work together look like?'
+      },
+      {
+        name: 'current_challenges',
+        label: 'Current Challenges',
+        type: 'textarea',
+        helpText: 'What obstacles or inconsistencies are you currently facing in your marketing or SEO management?'
+      },
+      {
+        name: 'key_performance_indicators',
+        label: 'Key Performance Indicators (KPIs)',
+        type: 'textarea',
+        helpText: 'Which metrics do you use to measure success? (e.g., website traffic, signed leads, Google reviews, etc.)'
+      },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 4: COMPANY IDENTITY (Brand Assets)
+  // -----------------------------------------------
   {
-    key: 'brand_compliance',
-    title: 'Brand & Compliance',
-    description: 'Share your brand guidelines and any industry regulations we need to know about.',
+    key: 'company_identity',
+    title: 'Company Identity',
+    shortTitle: 'IDENTITY',
+    description: 'Upload your brand assets so we can maintain visual consistency.',
     estimatedTime: '3 min',
     fields: [
-      { name: 'brand_guidelines_url', label: 'Brand Guidelines Link', type: 'url', placeholder: 'https://...' },
-      { name: 'tone_of_voice', label: 'Tone of Voice', type: 'textarea', placeholder: 'e.g., Professional but friendly, Technical, Casual' },
-      { name: 'industry_restrictions', label: 'Industry Restrictions', type: 'select', options: [
-        { value: 'none', label: 'None' },
-        { value: 'healthcare', label: 'Healthcare/Medical' },
-        { value: 'finance', label: 'Financial Services' },
-        { value: 'legal', label: 'Legal' },
-        { value: 'alcohol', label: 'Alcohol' },
-        { value: 'gambling', label: 'Gambling' },
-        { value: 'other', label: 'Other Regulated Industry' }
-      ]},
-      { name: 'required_disclaimers', label: 'Required Disclaimers', type: 'textarea', placeholder: 'Any legal disclaimers that must appear in marketing' },
-      { name: 'approval_workflow', label: 'Who signs off on marketing materials?', type: 'text' },
-      { name: 'consent_access_accounts', label: 'I authorize the agency to access and manage my marketing accounts', type: 'checkbox', required: true },
-      { name: 'consent_run_ads', label: 'I authorize the agency to run advertising campaigns on my behalf', type: 'checkbox', required: true },
-      { name: 'consent_data_processing', label: 'I acknowledge and agree to the data processing terms', type: 'checkbox', required: true },
+      // Assets & Typography
+      {
+        name: 'brand_style_guide_url',
+        label: 'Brand Style Guide / CI Manual',
+        type: 'url',
+        placeholder: 'Link to your brand guidelines (.pdf, .doc, .docx)',
+        helpText: 'Provide a link to your brand style guide document.'
+      },
+      {
+        name: 'logo_package_url',
+        label: 'Logo Package (Vector: .AI, .EPS, .SVG)',
+        type: 'url',
+        placeholder: 'Link to your logo files (.ai, .eps, .svg, .zip)',
+        helpText: 'Provide a link to your logo package.'
+      },
+      {
+        name: 'typography_fonts',
+        label: 'Typography / Fonts',
+        type: 'text',
+        placeholder: 'e.g., Montserrat (Headers), Open Sans (Body)'
+      },
+
+      // Brand Colors
+      {
+        name: 'primary_color',
+        label: 'Primary Brand Color (Hex)',
+        type: 'text',
+        placeholder: '#000000'
+      },
+      {
+        name: 'secondary_color',
+        label: 'Secondary Brand Color (Hex)',
+        type: 'text',
+        placeholder: '#000000'
+      },
+      {
+        name: 'additional_colors',
+        label: 'Additional Brand Colors',
+        type: 'textarea',
+        placeholder: 'List any additional brand colors with hex codes'
+      },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 5: TECHNICAL ASSETS & WEBSITE MAINTENANCE
+  // -----------------------------------------------
   {
-    key: 'website_technical',
-    title: 'Website & Technical Access',
-    description: 'Help us understand your technical setup for seamless integration.',
+    key: 'technical_assets',
+    title: 'Technical Assets & Website',
+    shortTitle: 'TECH',
+    description: 'Tell us about your technical setup and website maintenance.',
+    estimatedTime: '5 min',
+    fields: [
+      // Domain & DNS Management
+      {
+        name: 'owns_domain',
+        label: 'Do you own your domain name?',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'controls_dns',
+        label: 'Do you have control over your DNS settings?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'other_domains',
+        label: 'Other Domains',
+        type: 'textarea',
+        helpText: 'List any other domains you own that currently redirect to your main site.'
+      },
+
+      // Website Platform
+      {
+        name: 'is_wordpress',
+        label: 'Is your website built using WordPress?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'website_platform_other',
+        label: 'If not WordPress, what platform?',
+        type: 'text',
+        placeholder: 'e.g., Squarespace, Wix, Custom'
+      },
+
+      // Asset Ownership & Compliance
+      {
+        name: 'owns_written_content',
+        label: 'Do you own all the written content on your website?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'has_imagery_licenses',
+        label: 'Do you have proper licenses for all images and videos currently used?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'anti_spam_adequate',
+        label: 'Is your current anti-spam solution adequate?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+
+      // Lead & Form Management
+      {
+        name: 'form_submission_destinations',
+        label: 'Form Submission Destination',
+        type: 'textarea',
+        helpText: 'List all email addresses or intake software where website form submissions should be sent.'
+      },
+
+      // Call Tracking Details
+      {
+        name: 'uses_call_tracking',
+        label: 'Does your website use a call-tracking number?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'call_tracking_provider',
+        label: 'Call-Tracking Provider',
+        type: 'text',
+        placeholder: 'e.g., CallRail, Marchex, CallTrackingMetrics'
+      },
+      {
+        name: 'call_tracking_ownership',
+        label: 'Who owns the call-tracking account/numbers?',
+        type: 'radio',
+        options: [
+          { value: 'client', label: 'We (the client) own it' },
+          { value: 'agency', label: 'The agency owns it' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+
+      // Agency Access Management
+      {
+        name: 'can_remove_agency_access',
+        label: 'Can we remove access to your website or assets for previous agencies?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_applicable', label: 'Not Applicable' }
+        ]
+      },
+      {
+        name: 'agencies_to_remove',
+        label: 'Agencies to Remove',
+        type: 'textarea',
+        helpText: 'List all agencies whose access should be revoked.'
+      },
+    ]
+  },
+
+  // -----------------------------------------------
+  // SECTION 6: SEO TARGETS & CASE TYPES
+  // -----------------------------------------------
+  {
+    key: 'seo_targets',
+    title: 'SEO Targets & Case Types',
+    shortTitle: 'SEO',
+    description: 'Define your target markets and priority keywords for your SEO campaign.',
+    estimatedTime: '5 min',
+    fields: [
+      {
+        name: 'main_geographical_areas',
+        label: 'Main Geographical Areas',
+        type: 'textarea',
+        required: true,
+        helpText: 'Specify the target markets for your campaign (cities, regions, states).'
+      },
+      {
+        name: 'primary_case_types_keywords',
+        label: 'Primary Case Types & Keywords',
+        type: 'textarea',
+        required: true,
+        helpText: 'List the specific legal case types and keywords most important to your business.'
+      },
+      {
+        name: 'initial_focus_areas',
+        label: 'Initial Focus Areas',
+        type: 'textarea',
+        helpText: 'Which case types should we focus on first?'
+      },
+      {
+        name: 'secondary_gbp_locations',
+        label: 'Secondary GBP Locations',
+        type: 'textarea',
+        helpText: 'List any additional physical locations included in the SEO campaign.'
+      },
+      {
+        name: 'attorney_imagery_lsa',
+        label: 'Attorney Imagery (LSA)',
+        type: 'url',
+        placeholder: 'Link to attorney photos (zipped and named by attorney)',
+        helpText: 'Provide attorney photos for Local Services Ads.'
+      },
+      {
+        name: 'additional_campaign_info',
+        label: 'Additional Campaign Info',
+        type: 'textarea',
+        helpText: 'List any other relevant details or goals you wish to discuss.'
+      },
+    ]
+  },
+
+  // -----------------------------------------------
+  // SECTION 7: GOOGLE BUSINESS PROFILE
+  // -----------------------------------------------
+  {
+    key: 'google_business_profile',
+    title: 'Google Business Profile',
+    shortTitle: 'GBP',
+    description: 'Tell us about your Google Business Profile setup.',
+    estimatedTime: '3 min',
+    fields: [
+      {
+        name: 'has_gbp',
+        label: 'Do you have a Google Business Profile?',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not Sure' }
+        ]
+      },
+      {
+        name: 'gbp_listing_url',
+        label: 'GBP Listing URL',
+        type: 'url',
+        placeholder: 'https://g.page/...'
+      },
+      {
+        name: 'gbp_primary_category',
+        label: 'Primary Business Category',
+        type: 'text',
+        placeholder: 'e.g., Personal Injury Attorney'
+      },
+      {
+        name: 'gbp_secondary_categories',
+        label: 'Secondary Business Categories',
+        type: 'textarea',
+        placeholder: 'List additional categories, one per line'
+      },
+      {
+        name: 'current_review_count',
+        label: 'Current Review Count',
+        type: 'text',
+        placeholder: 'e.g., 45'
+      },
+      {
+        name: 'current_rating',
+        label: 'Current Star Rating',
+        type: 'text',
+        placeholder: 'e.g., 4.8'
+      },
+      {
+        name: 'nap_consistency',
+        label: 'NAP Consistency Notes',
+        type: 'textarea',
+        helpText: 'Name, Address, Phone - are they consistent across the web?'
+      },
+      {
+        name: 'gbp_photos_available',
+        label: 'Do you have photos/videos for GBP?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'some', label: 'Some' }
+        ]
+      },
+    ]
+  },
+
+  // -----------------------------------------------
+  // SECTION 8: LEGAL, COMPLIANCE, & CONTENT PREFERENCES
+  // -----------------------------------------------
+  {
+    key: 'legal_compliance',
+    title: 'Legal, Compliance, & Content',
+    shortTitle: 'LEGAL',
+    description: 'Share your legal and compliance requirements for marketing.',
     estimatedTime: '4 min',
     fields: [
-      { name: 'cms_platform', label: 'CMS Platform', type: 'select', options: [
-        { value: 'wordpress', label: 'WordPress' },
-        { value: 'shopify', label: 'Shopify' },
-        { value: 'webflow', label: 'Webflow' },
-        { value: 'wix', label: 'Wix' },
-        { value: 'squarespace', label: 'Squarespace' },
-        { value: 'custom', label: 'Custom Built' },
-        { value: 'other', label: 'Other' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'hosting_provider', label: 'Hosting Provider', type: 'text', placeholder: 'e.g., GoDaddy, AWS, Bluehost' },
-      { name: 'hosting_access_method', label: 'Hosting Access Method', type: 'text', placeholder: 'How do we access? (cPanel, SSH, etc.)' },
-      { name: 'domain_registrar', label: 'Domain Registrar', type: 'text', placeholder: 'e.g., GoDaddy, Namecheap' },
-      { name: 'has_staging', label: 'Do you have a staging environment?', type: 'radio', options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'dns_controller', label: 'Who controls DNS?', type: 'text', placeholder: 'e.g., IT department, domain registrar' },
-      { name: 'existing_plugins', label: 'Existing SEO/Marketing Plugins', type: 'textarea', placeholder: 'e.g., Yoast, Rank Math, GTM' },
-      { name: 'form_system', label: 'Form System', type: 'text', placeholder: 'e.g., Contact Form 7, Gravity Forms, HubSpot' },
+      {
+        name: 'advertising_regulations',
+        label: 'Advertising Regulations',
+        type: 'textarea',
+        helpText: 'List any state-specific restrictions on advertising (CTA rules, fees, testimonials, etc.).'
+      },
+      {
+        name: 'legal_disclaimers',
+        label: 'Legal Disclaimers',
+        type: 'textarea',
+        helpText: 'Provide any mandatory disclaimers required for the website and other digital assets.'
+      },
+
+      // Forbidden Content
+      {
+        name: 'words_phrases_to_avoid',
+        label: 'Words/Phrases to Avoid',
+        type: 'textarea',
+        placeholder: 'List words or phrases that should never be used'
+      },
+      {
+        name: 'imagery_to_avoid',
+        label: 'Imagery to Avoid',
+        type: 'textarea',
+        placeholder: 'Describe any imagery that should be avoided'
+      },
+      {
+        name: 'topics_to_avoid',
+        label: 'Topics to Avoid',
+        type: 'textarea',
+        placeholder: 'List any topics that should not be discussed in content'
+      },
+
+      // Brand Alignment
+      {
+        name: 'content_approval_required',
+        label: 'Content Approval Process',
+        type: 'radio',
+        helpText: 'Would you like to manually review, edit, and approve all content before it is published?',
+        options: [
+          { value: 'yes', label: 'Yes, I want to approve all content' },
+          { value: 'major_only', label: 'Only for major pieces' },
+          { value: 'no', label: 'No, I trust your judgment' }
+        ]
+      },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 9: COMMUNICATION & REPORTING PREFERENCES
+  // -----------------------------------------------
   {
-    key: 'analytics_tracking',
-    title: 'Analytics & Tracking',
-    description: 'Tell us about your current analytics and tracking setup.',
-    estimatedTime: '4 min',
-    fields: [
-      { name: 'ga4_property_id', label: 'GA4 Property ID', type: 'text', placeholder: 'e.g., G-XXXXXXXXXX' },
-      { name: 'ga4_admin_email', label: 'GA4 Admin Email (to grant access)', type: 'email' },
-      { name: 'gtm_container_id', label: 'GTM Container ID', type: 'text', placeholder: 'e.g., GTM-XXXXXXX' },
-      { name: 'current_conversions', label: 'Currently Tracked Conversions', type: 'textarea', placeholder: 'e.g., Form submissions, Phone clicks, Purchases' },
-      { name: 'call_tracking_provider', label: 'Call Tracking Provider', type: 'text', placeholder: 'e.g., CallRail, Marchex, None' },
-      { name: 'crm_system', label: 'CRM System', type: 'select', options: [
-        { value: 'hubspot', label: 'HubSpot' },
-        { value: 'salesforce', label: 'Salesforce' },
-        { value: 'zoho', label: 'Zoho' },
-        { value: 'pipedrive', label: 'Pipedrive' },
-        { value: 'none', label: 'None' },
-        { value: 'other', label: 'Other' }
-      ]},
-      { name: 'key_conversion_definitions', label: 'Key Conversion Definitions', type: 'textarea', helpText: 'What actions count as conversions? (form submit, call, purchase, etc.)' },
-      { name: 'consent_mode_status', label: 'Consent Mode Status', type: 'radio', options: [
-        { value: 'implemented', label: 'Implemented' },
-        { value: 'not_implemented', label: 'Not Implemented' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'offline_conversions', label: 'Do you track offline conversions?', type: 'radio', options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'interested', label: 'Interested in setting up' }
-      ]},
-    ]
-  },
-  {
-    key: 'google_search_console',
-    title: 'Google Search Console',
-    description: 'Tell us about your Search Console setup.',
+    key: 'communication_preferences',
+    title: 'Communication & Reporting',
+    shortTitle: 'COMMS',
+    description: 'Tell us how you prefer to communicate and receive updates.',
     estimatedTime: '2 min',
     fields: [
-      { name: 'gsc_setup', label: 'Is GSC set up?', type: 'radio', required: true, options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'gsc_property_type', label: 'GSC Property Type', type: 'radio', options: [
-        { value: 'domain', label: 'Domain Property' },
-        { value: 'url_prefix', label: 'URL Prefix' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'gsc_verified_owner_email', label: 'Verified Owner Email', type: 'email' },
-      { name: 'sitemaps_submitted', label: 'Sitemaps Submitted?', type: 'radio', options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'known_indexation_issues', label: 'Known Indexation Issues', type: 'textarea', placeholder: 'Any pages not being indexed?' },
-      { name: 'manual_actions_history', label: 'Any Manual Actions History?', type: 'radio', options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
+      {
+        name: 'additional_report_recipients',
+        label: 'Reporting Distribution',
+        type: 'textarea',
+        helpText: 'List any additional team members who should receive updates and reports (name and email).'
+      },
+      {
+        name: 'missed_call_preference',
+        label: 'If a reporting call is missed, would you prefer:',
+        type: 'radio',
+        options: [
+          { value: 'video_recap', label: 'A video recap' },
+          { value: 'reschedule', label: 'To reschedule the call' }
+        ]
+      },
+      {
+        name: 'call_frequency_preference',
+        label: 'Do you prefer:',
+        type: 'radio',
+        options: [
+          { value: 'monthly_calls', label: 'Monthly reporting calls' },
+          { value: 'video_recaps_quarterly', label: 'Video recaps with quarterly strategy calls' }
+        ]
+      },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 10: TECHNICAL ACCESS & TUTORIALS
+  // -----------------------------------------------
   {
-    key: 'local_seo_gbp',
-    title: 'Local SEO & Google Business Profile',
-    description: 'For businesses with physical locations or local service areas.',
-    estimatedTime: '3 min',
+    key: 'technical_access',
+    title: 'Technical Access & Tutorials',
+    shortTitle: 'ACCESS',
+    description: 'The most critical step. Please grant access using the tutorials below.',
+    estimatedTime: '10 min',
     fields: [
-      { name: 'has_gbp', label: 'Do you have a Google Business Profile?', type: 'radio', required: true, options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'gbp_listing_urls', label: 'GBP Listing URL(s)', type: 'textarea', placeholder: 'Paste your Google Business Profile URL(s)' },
-      { name: 'nap_consistency', label: 'NAP Consistency Notes', type: 'textarea', helpText: 'Name, Address, Phone - are they consistent across the web?' },
-      { name: 'business_categories', label: 'Business Categories', type: 'text', placeholder: 'e.g., Digital Marketing Agency, SEO Consultant' },
-      { name: 'gbp_service_areas', label: 'Service Areas (for GBP)', type: 'textarea' },
-      { name: 'review_strategy', label: 'Review Strategy & Reputation Concerns', type: 'textarea', placeholder: 'Current review count, rating, any reputation issues' },
-      { name: 'number_of_locations', label: 'Number of Locations', type: 'text', placeholder: 'e.g., 1, 5, 20+' },
-      { name: 'photos_assets_available', label: 'Photos & Brand Assets Available?', type: 'radio', options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-        { value: 'some', label: 'Some' }
-      ]},
+      // WordPress Admin Access
+      {
+        name: 'wordpress_access_granted',
+        label: 'WordPress Admin Access',
+        type: 'textarea',
+        placeholder: 'I have added the user...',
+        helpText: 'Add keith@clixsy.com as an Administrator. Confirm below once done.'
+      },
+
+      // Domain Registrar
+      {
+        name: 'domain_registrar_access',
+        label: 'Domain Registrar (e.g., GoDaddy)',
+        type: 'textarea',
+        placeholder: 'Login details if delegation not possible...',
+        helpText: 'Delegate access to corey@clixsy.com. Provide login details if delegation is not possible.'
+      },
+
+      // DNS Access
+      {
+        name: 'dns_access_granted',
+        label: 'DNS Access (e.g., Cloudflare)',
+        type: 'textarea',
+        placeholder: 'Confirm access granted or provide login details...',
+        helpText: 'Add tempclixsyreports@gmail.com to your DNS provider.'
+      },
+
+      // Google Search Console
+      {
+        name: 'gsc_access_granted',
+        label: 'Google Search Console (GSC)',
+        type: 'textarea',
+        placeholder: 'Confirm access granted...',
+        helpText: 'Add tempclixsyreports@gmail.com as an Owner.'
+      },
+
+      // Google Analytics
+      {
+        name: 'ga_access_granted',
+        label: 'Google Analytics',
+        type: 'textarea',
+        placeholder: 'Confirm access granted...',
+        helpText: 'Add tempclixsyreports@gmail.com as an Owner.'
+      },
+
+      // Google Business Profile
+      {
+        name: 'gbp_access_granted',
+        label: 'Google Business Profile (GBP)',
+        type: 'textarea',
+        placeholder: 'Confirm access granted...',
+        helpText: 'Add tempclixsyreports@gmail.com as an Owner for all managed profiles.'
+      },
+
+      // Video Hosting
+      {
+        name: 'youtube_access_granted',
+        label: 'YouTube Access',
+        type: 'textarea',
+        placeholder: 'Confirm access granted...',
+        helpText: 'Add tempclixsyreports@gmail.com as a Manager.'
+      },
+      {
+        name: 'other_video_platforms',
+        label: 'Other Video Platforms (Wistia, Vimeo)',
+        type: 'textarea',
+        placeholder: 'Provide login details for Wistia, Vimeo, etc.'
+      },
+
+      // Local Services Ads
+      {
+        name: 'lsa_customer_ids',
+        label: 'Local Services Ads (LSA) - Customer ID(s)',
+        type: 'textarea',
+        helpText: 'Provide your Customer ID Number(s) (CIDs) so our team can send an access request.'
+      },
+
+      // Other Credentials
+      {
+        name: 'other_account_credentials',
+        label: 'Other Account Credentials',
+        type: 'textarea',
+        helpText: 'List any additional credentials (social media, advertising platforms, etc.) relevant to the campaign.'
+      },
     ]
   },
+
+  // -----------------------------------------------
+  // SECTION 11: WELCOME GIFTS & LOGISTICS
+  // -----------------------------------------------
   {
-    key: 'seo_discovery',
-    title: 'SEO Discovery',
-    description: 'Help us understand your SEO history and content assets.',
-    estimatedTime: '5 min',
+    key: 'welcome_gifts',
+    title: 'Welcome Gifts & Logistics',
+    shortTitle: 'GIFTS',
+    description: 'Help us send a welcome gift to your team.',
+    estimatedTime: '2 min',
     fields: [
-      { name: 'core_services_list', label: 'Core Services/Products List', type: 'textarea', required: true, placeholder: 'List your main offerings (one per line)' },
-      { name: 'priority_locations', label: 'Priority Locations (if local)', type: 'textarea', placeholder: 'Cities, regions, or countries to target' },
-      { name: 'known_keywords', label: 'Known Keywords You Care About', type: 'textarea', placeholder: 'Keywords you want to rank for' },
-      { name: 'past_seo_work', label: 'Past SEO Work Summary', type: 'textarea', helpText: 'What SEO has been done before? By whom? When?' },
-      { name: 'past_penalties', label: 'Past Penalties or Traffic Drops', type: 'textarea', placeholder: 'Any known issues? Approximate dates?' },
-      { name: 'content_assets', label: 'Available Content Assets', type: 'multiselect', options: [
-        { value: 'blog', label: 'Blog Posts' },
-        { value: 'case_studies', label: 'Case Studies' },
-        { value: 'landing_pages', label: 'Landing Pages' },
-        { value: 'whitepapers', label: 'Whitepapers/Guides' },
-        { value: 'videos', label: 'Videos' },
-        { value: 'infographics', label: 'Infographics' }
-      ]},
-      { name: 'subject_matter_experts', label: 'Subject Matter Experts for Interviews', type: 'textarea', placeholder: 'Who can we interview for content creation?' },
-      { name: 'competitors_to_benchmark', label: 'Competitors to Benchmark', type: 'textarea', placeholder: 'Who are you competing against in search?' },
+      // Office/Team Gift
+      {
+        name: 'office_gift_recipient',
+        label: 'Office/Team Gift - Recipient Name',
+        type: 'text'
+      },
+      {
+        name: 'office_gift_address',
+        label: 'Office/Team Gift - Shipping Address',
+        type: 'textarea'
+      },
+
+      // Individual Gift
+      {
+        name: 'individual_gift_recipient',
+        label: 'Individual Gift - Recipient Name',
+        type: 'text'
+      },
+      {
+        name: 'individual_gift_address',
+        label: 'Individual Gift - Shipping Address',
+        type: 'textarea'
+      },
+
+      // Shipping Preference
+      {
+        name: 'shipping_preference',
+        label: 'Should we delay shipment for any reason?',
+        type: 'textarea',
+        placeholder: 'e.g., Wait until after Dec 15, Office closed next week'
+      },
     ]
   },
-  {
-    key: 'ppc_paid_media',
-    title: 'PPC & Paid Media',
-    description: 'Tell us about your paid advertising history and goals.',
-    estimatedTime: '5 min',
-    fields: [
-      { name: 'platforms_used', label: 'Platforms Used', type: 'multiselect', options: [
-        { value: 'google_ads', label: 'Google Ads' },
-        { value: 'microsoft_ads', label: 'Microsoft Ads' },
-        { value: 'meta', label: 'Meta (Facebook/Instagram)' },
-        { value: 'linkedin', label: 'LinkedIn' },
-        { value: 'tiktok', label: 'TikTok' },
-        { value: 'none', label: 'None Currently' }
-      ]},
-      { name: 'account_ids_access', label: 'Account IDs / Access Emails', type: 'textarea', placeholder: 'List account IDs or emails to grant access' },
-      { name: 'current_monthly_spend', label: 'Current Monthly Spend', type: 'text', placeholder: 'e.g., $5,000' },
-      { name: 'target_monthly_spend', label: 'Target Monthly Spend', type: 'text', placeholder: 'e.g., $10,000' },
-      { name: 'primary_campaigns', label: 'Primary Campaigns & Offers', type: 'textarea', placeholder: 'What are you promoting?' },
-      { name: 'geo_targeting', label: 'Geo Targeting', type: 'text', placeholder: 'Where do you target ads?' },
-      { name: 'restricted_policies', label: 'Any Restricted Policies or Approvals Needed?', type: 'textarea' },
-      { name: 'top_converting_keywords', label: 'Top Converting Keywords (if known)', type: 'textarea' },
-      { name: 'negative_keyword_themes', label: 'Negative Keyword Themes', type: 'textarea', placeholder: 'What should we exclude?' },
-      { name: 'landing_pages_used', label: 'Landing Pages Used', type: 'textarea', placeholder: 'URLs of pages used in ads' },
-      { name: 'conversion_tracking_status', label: 'Conversion Tracking Status', type: 'radio', options: [
-        { value: 'fully_setup', label: 'Fully Set Up' },
-        { value: 'partial', label: 'Partially Set Up' },
-        { value: 'not_setup', label: 'Not Set Up' },
-        { value: 'not_sure', label: 'Not Sure' }
-      ]},
-      { name: 'remarketing_audiences', label: 'Remarketing Audiences', type: 'textarea', placeholder: 'Any existing audiences set up?' },
-    ]
-  },
-  {
-    key: 'social_creative',
-    title: 'Social & Creative',
-    description: 'Tell us about your social media presence and creative capabilities.',
-    estimatedTime: '3 min',
-    fields: [
-      { name: 'social_profiles', label: 'Social Profile URLs', type: 'textarea', placeholder: 'Facebook, Instagram, LinkedIn, Twitter, etc.' },
-      { name: 'posting_frequency', label: 'Current Posting Frequency', type: 'text', placeholder: 'e.g., Daily, Weekly, Monthly' },
-      { name: 'creative_assets_available', label: 'Available Creative Assets', type: 'textarea', placeholder: 'Photos, videos, graphics, etc.' },
-      { name: 'brand_dos_donts', label: 'Brand Do\'s and Don\'ts', type: 'textarea', placeholder: 'What should/shouldn\'t be in creative?' },
-      { name: 'video_capabilities', label: 'Video Capabilities', type: 'radio', options: [
-        { value: 'in_house', label: 'In-house production' },
-        { value: 'external', label: 'External vendor' },
-        { value: 'none', label: 'No video capability' },
-        { value: 'need_help', label: 'Need help with this' }
-      ]},
-      { name: 'creative_approval_process', label: 'Creative Approval Process', type: 'textarea', placeholder: 'Who approves creative? How long does it take?' },
-    ]
-  },
-  {
-    key: 'sales_operations',
-    title: 'Sales Pipeline & Operations',
-    description: 'Help us understand how leads are handled after they come in.',
-    estimatedTime: '3 min',
-    fields: [
-      { name: 'lead_handler', label: 'Who Handles Leads?', type: 'text', placeholder: 'e.g., Sales team, Owner, Reception' },
-      { name: 'lead_response_time', label: 'Average Lead Response Time', type: 'text', placeholder: 'e.g., Within 1 hour, Same day, Next day' },
-      { name: 'operating_hours', label: 'Operating Hours', type: 'text', placeholder: 'e.g., Mon-Fri 9am-5pm GMT' },
-      { name: 'booking_software', label: 'Booking Software', type: 'text', placeholder: 'e.g., Calendly, Acuity, None' },
-      { name: 'crm_stages', label: 'CRM Stages', type: 'textarea', placeholder: 'What are your sales pipeline stages?' },
-      { name: 'common_objections', label: 'Common Sales Objections', type: 'textarea', placeholder: 'What concerns do prospects usually have?' },
-      { name: 'top_close_reasons', label: 'Top Reasons Customers Choose You', type: 'textarea' },
-      { name: 'top_loss_reasons', label: 'Top Reasons Customers Don\'t Choose You', type: 'textarea' },
-    ]
-  },
+
+  // -----------------------------------------------
+  // SECTION 12: REVIEW & SUBMIT
+  // -----------------------------------------------
   {
     key: 'final_review',
     title: 'Review & Submit',
-    description: 'Review your information and submit the onboarding form.',
+    shortTitle: 'FINISH',
+    description: 'Review your information and schedule your onboarding call.',
     estimatedTime: '2 min',
     fields: [
-      { name: 'confirm_accuracy', label: 'I confirm that the information provided is accurate to the best of my knowledge', type: 'checkbox', required: true },
-      { name: 'confirm_proceed', label: 'I authorize the agency to proceed with the marketing setup based on this information', type: 'checkbox', required: true },
-      { name: 'additional_notes', label: 'Additional Notes or Questions', type: 'textarea', placeholder: 'Anything else you\'d like us to know?' },
+      {
+        name: 'confirm_accuracy',
+        label: 'I confirm that the information provided is accurate to the best of my knowledge',
+        type: 'checkbox',
+        required: true
+      },
+      {
+        name: 'confirm_proceed',
+        label: 'I authorize Clixsy to proceed with the marketing setup based on this information',
+        type: 'checkbox',
+        required: true
+      },
+      {
+        name: 'additional_notes',
+        label: 'Additional Notes or Questions',
+        type: 'textarea',
+        placeholder: 'Anything else you\'d like us to know before your onboarding call?'
+      },
     ]
   }
 ];
@@ -336,125 +752,123 @@ const optionalEmail = z.string().email().optional().or(z.literal(''));
 
 // Step-specific validation schemas
 export const stepValidationSchemas: Record<string, z.ZodSchema> = {
-  business_overview: z.object({
-    legal_business_name: z.string().min(1, 'Legal business name is required'),
-    trading_name: optionalString,
+  contact_information: z.object({
+    main_contact_name: z.string().min(1, 'Main contact name is required'),
+    main_contact_title: z.string().min(1, 'Title/Role is required'),
+    main_contact_email: z.string().email('Please enter a valid email'),
+    main_contact_phone: z.string().min(1, 'Contact phone is required'),
+    secondary_contact_name: optionalString,
+    secondary_contact_email: optionalEmail,
+    secondary_contact_phone: optionalString,
+    tech_contact_name: optionalString,
+    tech_contact_email: optionalEmail,
+    tech_contact_phone: optionalString,
+    previous_agency_contact: optionalString,
+  }),
+
+  business_profile: z.object({
+    business_name: z.string().min(1, 'Business name is required'),
     website_url: z.string().url('Please enter a valid URL'),
-    primary_contact_name: z.string().min(1, 'Primary contact name is required'),
-    primary_contact_email: z.string().email('Please enter a valid email'),
-    primary_contact_phone: optionalString,
-    other_stakeholders: optionalString,
-    physical_address: optionalString,
-    service_areas: optionalString,
-    timezone: optionalString,
-    business_description: z.string().min(1, 'Please describe your business'),
-    unique_selling_points: optionalString,
-    competitor_1: optionalUrl,
-    competitor_2: optionalUrl,
-    competitor_3: optionalUrl,
+    owner_names: optionalString,
+    physical_address: z.string().min(1, 'Physical address is required'),
+    move_in_date: optionalString,
+    business_phone: z.string().min(1, 'Business phone is required'),
+    year_founded: optionalString,
+    languages_spoken: optionalString,
+    owner_license_number: optionalString,
+    license_issue_date: optionalString,
+    ein_number: optionalString,
   }),
-  goals_kpis: z.object({
-    primary_goal: z.string().min(1, 'Please select a primary goal'),
-    secondary_goals: optionalString,
-    target_monthly_leads: optionalString,
-    target_cpa: optionalString,
-    target_roas: optionalString,
-    current_baseline: optionalString,
-    priority_products: optionalString,
-    seasonality: optionalString,
-    target_markets: optionalString,
+
+  vision_strategy: z.object({
+    success_definition: z.string().min(1, 'Please define what success looks like'),
+    magic_wand_outcome: optionalString,
+    current_challenges: optionalString,
+    key_performance_indicators: optionalString,
   }),
-  brand_compliance: z.object({
-    brand_guidelines_url: optionalUrl,
-    tone_of_voice: optionalString,
-    industry_restrictions: optionalString,
-    required_disclaimers: optionalString,
-    approval_workflow: optionalString,
-    consent_access_accounts: z.boolean().refine(val => val === true, 'You must authorize account access'),
-    consent_run_ads: z.boolean().refine(val => val === true, 'You must authorize running ads'),
-    consent_data_processing: z.boolean().refine(val => val === true, 'You must agree to data processing terms'),
+
+  company_identity: z.object({
+    brand_style_guide_url: optionalUrl,
+    logo_package_url: optionalUrl,
+    typography_fonts: optionalString,
+    primary_color: optionalString,
+    secondary_color: optionalString,
+    additional_colors: optionalString,
   }),
-  website_technical: z.object({
-    cms_platform: optionalString,
-    hosting_provider: optionalString,
-    hosting_access_method: optionalString,
-    domain_registrar: optionalString,
-    has_staging: optionalString,
-    dns_controller: optionalString,
-    existing_plugins: optionalString,
-    form_system: optionalString,
-  }),
-  analytics_tracking: z.object({
-    ga4_property_id: optionalString,
-    ga4_admin_email: optionalEmail,
-    gtm_container_id: optionalString,
-    current_conversions: optionalString,
+
+  technical_assets: z.object({
+    owns_domain: z.string().min(1, 'Please indicate domain ownership'),
+    controls_dns: optionalString,
+    other_domains: optionalString,
+    is_wordpress: optionalString,
+    website_platform_other: optionalString,
+    owns_written_content: optionalString,
+    has_imagery_licenses: optionalString,
+    anti_spam_adequate: optionalString,
+    form_submission_destinations: optionalString,
+    uses_call_tracking: optionalString,
     call_tracking_provider: optionalString,
-    crm_system: optionalString,
-    key_conversion_definitions: optionalString,
-    consent_mode_status: optionalString,
-    offline_conversions: optionalString,
+    call_tracking_ownership: optionalString,
+    can_remove_agency_access: optionalString,
+    agencies_to_remove: optionalString,
   }),
-  google_search_console: z.object({
-    gsc_setup: z.string().min(1, 'Please indicate GSC status'),
-    gsc_property_type: optionalString,
-    gsc_verified_owner_email: optionalEmail,
-    sitemaps_submitted: optionalString,
-    known_indexation_issues: optionalString,
-    manual_actions_history: optionalString,
+
+  seo_targets: z.object({
+    main_geographical_areas: z.string().min(1, 'Please specify target geographical areas'),
+    primary_case_types_keywords: z.string().min(1, 'Please list primary case types and keywords'),
+    initial_focus_areas: optionalString,
+    secondary_gbp_locations: optionalString,
+    attorney_imagery_lsa: optionalUrl,
+    additional_campaign_info: optionalString,
   }),
-  local_seo_gbp: z.object({
+
+  google_business_profile: z.object({
     has_gbp: z.string().min(1, 'Please indicate GBP status'),
-    gbp_listing_urls: optionalString,
+    gbp_listing_url: optionalUrl,
+    gbp_primary_category: optionalString,
+    gbp_secondary_categories: optionalString,
+    current_review_count: optionalString,
+    current_rating: optionalString,
     nap_consistency: optionalString,
-    business_categories: optionalString,
-    gbp_service_areas: optionalString,
-    review_strategy: optionalString,
-    number_of_locations: optionalString,
-    photos_assets_available: optionalString,
+    gbp_photos_available: optionalString,
   }),
-  seo_discovery: z.object({
-    core_services_list: z.string().min(1, 'Please list your core services'),
-    priority_locations: optionalString,
-    known_keywords: optionalString,
-    past_seo_work: optionalString,
-    past_penalties: optionalString,
-    content_assets: z.array(z.string()).optional(),
-    subject_matter_experts: optionalString,
-    competitors_to_benchmark: optionalString,
+
+  legal_compliance: z.object({
+    advertising_regulations: optionalString,
+    legal_disclaimers: optionalString,
+    words_phrases_to_avoid: optionalString,
+    imagery_to_avoid: optionalString,
+    topics_to_avoid: optionalString,
+    content_approval_required: optionalString,
   }),
-  ppc_paid_media: z.object({
-    platforms_used: z.array(z.string()).optional(),
-    account_ids_access: optionalString,
-    current_monthly_spend: optionalString,
-    target_monthly_spend: optionalString,
-    primary_campaigns: optionalString,
-    geo_targeting: optionalString,
-    restricted_policies: optionalString,
-    top_converting_keywords: optionalString,
-    negative_keyword_themes: optionalString,
-    landing_pages_used: optionalString,
-    conversion_tracking_status: optionalString,
-    remarketing_audiences: optionalString,
+
+  communication_preferences: z.object({
+    additional_report_recipients: optionalString,
+    missed_call_preference: optionalString,
+    call_frequency_preference: optionalString,
   }),
-  social_creative: z.object({
-    social_profiles: optionalString,
-    posting_frequency: optionalString,
-    creative_assets_available: optionalString,
-    brand_dos_donts: optionalString,
-    video_capabilities: optionalString,
-    creative_approval_process: optionalString,
+
+  technical_access: z.object({
+    wordpress_access_granted: optionalString,
+    domain_registrar_access: optionalString,
+    dns_access_granted: optionalString,
+    gsc_access_granted: optionalString,
+    ga_access_granted: optionalString,
+    gbp_access_granted: optionalString,
+    youtube_access_granted: optionalString,
+    other_video_platforms: optionalString,
+    lsa_customer_ids: optionalString,
+    other_account_credentials: optionalString,
   }),
-  sales_operations: z.object({
-    lead_handler: optionalString,
-    lead_response_time: optionalString,
-    operating_hours: optionalString,
-    booking_software: optionalString,
-    crm_stages: optionalString,
-    common_objections: optionalString,
-    top_close_reasons: optionalString,
-    top_loss_reasons: optionalString,
+
+  welcome_gifts: z.object({
+    office_gift_recipient: optionalString,
+    office_gift_address: optionalString,
+    individual_gift_recipient: optionalString,
+    individual_gift_address: optionalString,
+    shipping_preference: optionalString,
   }),
+
   final_review: z.object({
     confirm_accuracy: z.boolean().refine(val => val === true, 'You must confirm accuracy'),
     confirm_proceed: z.boolean().refine(val => val === true, 'You must authorize proceeding'),

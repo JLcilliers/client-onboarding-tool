@@ -6,7 +6,7 @@ import crypto from 'crypto';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { clientName, contactName, contactEmail, logoBase64, logoFileName } = body;
+    const { clientName, contactName, contactEmail } = body;
 
     if (!clientName) {
       return NextResponse.json(
@@ -69,28 +69,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload logo if provided
-    let logoPath = null;
-    if (logoBase64 && logoFileName) {
-      const fileExt = logoFileName.split('.').pop();
-      logoPath = `${agencyId}/${sessionId}/logo.${fileExt}`;
-
-      // Convert base64 to buffer
-      const base64Data = logoBase64.replace(/^data:image\/\w+;base64,/, '');
-      const buffer = Buffer.from(base64Data, 'base64');
-
-      const { error: uploadError } = await supabase.storage
-        .from('onboarding-logos')
-        .upload(logoPath, buffer, {
-          contentType: `image/${fileExt}`,
-        });
-
-      if (uploadError) {
-        console.error('Logo upload error:', uploadError);
-        logoPath = null;
-      }
-    }
-
     // Create onboarding session
     const { error: sessionError } = await supabase
       .from('onboarding_sessions')
@@ -101,7 +79,6 @@ export async function POST(request: NextRequest) {
         token,
         status: 'draft',
         current_step: 0,
-        logo_path: logoPath,
       });
 
     if (sessionError) {

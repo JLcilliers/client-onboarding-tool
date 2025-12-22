@@ -37,7 +37,6 @@ export default async function OnboardingPage({ params }: OnboardingPageProps) {
       token={token}
       initialStep={data.session.currentStep}
       initialAnswers={data.answers}
-      logoUrl={data.session.logoUrl}
       sessionStatus={data.session.status}
     />
   );
