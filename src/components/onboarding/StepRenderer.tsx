@@ -9,11 +9,22 @@ interface StepRendererProps {
   onChange: (name: string, value: unknown) => void;
 }
 
+// Determine if a field should span both columns (full width)
+function shouldSpanFullWidth(field: OnboardingField): boolean {
+  // Textarea always spans full width
+  if (field.type === 'textarea') return true;
+  // Multiselect and radio with options span full width (they have vertical options)
+  if (field.type === 'multiselect' || field.type === 'radio') return true;
+  // Fields with many options or long labels
+  if (field.options && field.options.length > 4) return true;
+  return false;
+}
+
 export default function StepRenderer({ step, values, errors, onChange }: StepRendererProps) {
   const renderField = (field: OnboardingField) => {
     const value = values[field.name];
     const error = errors[field.name];
-    const baseInputClasses = `w-full px-4 py-3 border rounded-lg transition-all duration-150 ${
+    const baseInputClasses = `w-full px-3 py-2.5 border rounded-lg transition-all duration-150 text-sm ${
       error
         ? 'border-[#E5484D] bg-red-50'
         : 'border-[#E6E8EA] bg-white hover:border-[#A0A0A0] focus:border-[#25DC7F] focus:ring-2 focus:ring-[#25DC7F]/20'
@@ -52,7 +63,7 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
             value={(value as string) || ''}
             onChange={(e) => onChange(field.name, e.target.value)}
             placeholder={field.placeholder}
-            rows={4}
+            rows={3}
             className={baseInputClasses}
           />
         );
@@ -78,11 +89,11 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
       case 'multiselect':
         const selectedValues = (value as string[]) || [];
         return (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {field.options?.map((option) => (
               <label
                 key={option.value}
-                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all duration-150 ${
+                className={`flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer transition-all duration-150 text-sm ${
                   selectedValues.includes(option.value)
                     ? 'border-[#25DC7F] bg-[#25DC7F]/5'
                     : 'border-[#E6E8EA] hover:border-[#A0A0A0]'
@@ -98,7 +109,7 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
                       onChange(field.name, selectedValues.filter((v) => v !== option.value));
                     }
                   }}
-                  className="w-5 h-5 text-[#25DC7F] rounded border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
+                  className="w-4 h-4 text-[#25DC7F] rounded border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
                 />
                 <span className="text-[#1A1A1A]">{option.label}</span>
               </label>
@@ -123,11 +134,11 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
 
       case 'radio':
         return (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {field.options?.map((option) => (
               <label
                 key={option.value}
-                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all duration-150 ${
+                className={`flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer transition-all duration-150 text-sm ${
                   value === option.value
                     ? 'border-[#25DC7F] bg-[#25DC7F]/5'
                     : 'border-[#E6E8EA] hover:border-[#A0A0A0]'
@@ -139,7 +150,7 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
                   value={option.value}
                   checked={value === option.value}
                   onChange={(e) => onChange(field.name, e.target.value)}
-                  className="w-5 h-5 text-[#25DC7F] border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
+                  className="w-4 h-4 text-[#25DC7F] border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
                 />
                 <span className="text-[#1A1A1A]">{option.label}</span>
               </label>
@@ -152,41 +163,52 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
     }
   };
 
+  // Filter out hidden fields (based on dependsOn conditions)
+  const visibleFields = step.fields.filter((field) => {
+    if (field.dependsOn) {
+      const dependentValue = values[field.dependsOn.field];
+      return dependentValue === field.dependsOn.value;
+    }
+    return true;
+  });
+
   return (
-    <div className="space-y-6">
-      {/* Fields */}
-      <div className="space-y-6">
-        {step.fields.map((field) => {
+    <div>
+      {/* Two-column grid layout for fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-6 md:gap-y-4">
+        {visibleFields.map((field) => {
+          const spanFull = shouldSpanFullWidth(field);
+
           // For checkboxes, we handle the label differently
           if (field.type === 'checkbox') {
             return (
-              <div key={field.name}>
+              <div key={field.name} className={spanFull ? 'md:col-span-2' : ''}>
                 {renderField(field)}
                 {field.helpText && (
-                  <p className="mt-2 text-sm text-[#6B6B6B] ml-8">{field.helpText}</p>
+                  <p className="mt-1 text-xs text-[#6B6B6B] ml-8">{field.helpText}</p>
                 )}
                 {errors[field.name] && (
-                  <p className="mt-1 text-sm text-[#E5484D] ml-8">{errors[field.name]}</p>
+                  <p className="mt-1 text-xs text-[#E5484D] ml-8">{errors[field.name]}</p>
                 )}
               </div>
             );
           }
 
           return (
-            <div key={field.name}>
+            <div key={field.name} className={spanFull ? 'md:col-span-2' : ''}>
               <label
                 htmlFor={field.name}
-                className="block text-sm font-semibold text-[#0B0B0B] mb-2"
+                className="block text-sm font-semibold text-[#0B0B0B] mb-1.5"
               >
                 {field.label}
                 {field.required && <span className="text-[#E5484D] ml-1">*</span>}
               </label>
               {renderField(field)}
               {field.helpText && (
-                <p className="mt-2 text-sm text-[#6B6B6B]">{field.helpText}</p>
+                <p className="mt-1 text-xs text-[#6B6B6B]">{field.helpText}</p>
               )}
               {errors[field.name] && (
-                <p className="mt-1 text-sm text-[#E5484D]">{errors[field.name]}</p>
+                <p className="mt-1 text-xs text-[#E5484D]">{errors[field.name]}</p>
               )}
             </div>
           );

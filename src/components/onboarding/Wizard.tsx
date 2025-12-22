@@ -48,6 +48,9 @@ export default function Wizard({
     return getMissingRequiredFields(answers);
   }, [answers]);
 
+  // Check if all required fields are complete (for blocking submission)
+  const canSubmit = missingFields.length === 0;
+
   // Group missing fields by step
   const missingFieldsByStep = useMemo(() => {
     const grouped: Record<string, { stepTitle: string; stepIndex: number; fields: { fieldName: string; fieldLabel: string }[] }> = {};
@@ -175,6 +178,12 @@ export default function Wizard({
 
   // Handle submit
   const handleSubmit = async () => {
+    // Block submission if there are missing required fields
+    if (!canSubmit) {
+      setSaveError('Please complete all required fields before submitting. Go back to the "Almost There" step to see what\'s missing.');
+      return;
+    }
+
     // Validate final step
     const validation = validateStepData(currentStep.key, stepAnswers);
     if (!validation.success && validation.errors) {
@@ -376,7 +385,7 @@ export default function Wizard({
           </div>
 
           {/* Progress Bar & Step Navigator */}
-          <div className="max-w-6xl mx-auto px-6 pb-6">
+          <div className="max-w-6xl mx-auto px-6 pb-4">
             {/* Progress Bar */}
             <div className="mb-4">
               <div className="flex items-center justify-between text-sm text-[#A0A0A0] mb-2">
@@ -391,8 +400,8 @@ export default function Wizard({
               </div>
             </div>
 
-            {/* Step Dots Navigator */}
-            <div className="flex items-center justify-center gap-1 flex-wrap">
+            {/* Icon Step Navigator */}
+            <div className="flex items-center justify-start gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#569077] scrollbar-track-[#1A2A1F]">
               {onboardingSteps.map((step, index) => {
                 const isCompleted = completedStepsState.includes(step.key);
                 const isCurrent = index === currentStepIndex;
@@ -401,15 +410,18 @@ export default function Wizard({
                   <button
                     key={step.key}
                     onClick={() => navigateToStep(index)}
-                    className={`group relative w-3 h-3 rounded-full transition-all cursor-pointer ${
+                    className={`group relative flex-shrink-0 w-10 h-10 rounded-lg transition-all cursor-pointer flex items-center justify-center ${
                       isCompleted
-                        ? 'bg-[#25DC7F]'
+                        ? 'bg-[#25DC7F] text-white'
                         : isCurrent
-                        ? 'bg-white ring-2 ring-[#25DC7F]'
-                        : 'bg-[#569077] hover:bg-[#25DC7F]/50'
+                        ? 'bg-white text-[#0F1A14] ring-2 ring-[#25DC7F]'
+                        : 'bg-[#1A2A1F] text-[#569077] hover:bg-[#25DC7F]/20 hover:text-[#25DC7F]'
                     }`}
                     title={step.title}
                   >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
+                    </svg>
                     {/* Tooltip */}
                     <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0B0B0B] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                       {step.title}
@@ -424,7 +436,7 @@ export default function Wizard({
         {/* Main Content */}
         <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
           {/* Step Title */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <h1 className="text-2xl font-extrabold text-[#0B0B0B] mb-1">
               {currentStep.title}
             </h1>
@@ -445,10 +457,10 @@ export default function Wizard({
                   <span className="text-[#E5484D]">{saveError}</span>
                 </div>
                 <button
-                  onClick={() => saveStep(false)}
+                  onClick={() => setSaveError(null)}
                   className="mt-2 text-sm text-[#E5484D] hover:underline"
                 >
-                  Try again
+                  Dismiss
                 </button>
               </div>
             )}
@@ -502,10 +514,14 @@ export default function Wizard({
             {currentStepIndex === onboardingSteps.length - 1 ? (
               <button
                 onClick={handleSubmit}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-8 py-3 bg-[#25DC7F] text-white rounded-lg font-semibold hover:bg-[#1DB96A] transition-all disabled:opacity-50"
+                disabled={isSaving || !canSubmit}
+                className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold transition-all ${
+                  canSubmit
+                    ? 'bg-[#25DC7F] text-white hover:bg-[#1DB96A]'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                } disabled:opacity-50`}
               >
-                {isSaving ? 'Submitting...' : 'Submit'}
+                {isSaving ? 'Submitting...' : canSubmit ? 'Submit' : 'Complete All Fields'}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
