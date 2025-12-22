@@ -13,8 +13,10 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
   const renderField = (field: OnboardingField) => {
     const value = values[field.name];
     const error = errors[field.name];
-    const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-      error ? 'border-red-500 bg-red-50' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-800'
+    const baseInputClasses = `w-full px-4 py-3 border rounded-lg transition-all duration-150 ${
+      error
+        ? 'border-[#E5484D] bg-red-50'
+        : 'border-[#E6E8EA] bg-white hover:border-[#A0A0A0] focus:border-[#25DC7F] focus:ring-2 focus:ring-[#25DC7F]/20'
     }`;
 
     // Check if field should be shown based on dependsOn
@@ -80,7 +82,11 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
             {field.options?.map((option) => (
               <label
                 key={option.value}
-                className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all duration-150 ${
+                  selectedValues.includes(option.value)
+                    ? 'border-[#25DC7F] bg-[#25DC7F]/5'
+                    : 'border-[#E6E8EA] hover:border-[#A0A0A0]'
+                }`}
               >
                 <input
                   type="checkbox"
@@ -92,9 +98,9 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
                       onChange(field.name, selectedValues.filter((v) => v !== option.value));
                     }
                   }}
-                  className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  className="w-5 h-5 text-[#25DC7F] rounded border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
                 />
-                <span className="text-gray-700 dark:text-gray-300">{option.label}</span>
+                <span className="text-[#1A1A1A]">{option.label}</span>
               </label>
             ))}
           </div>
@@ -109,9 +115,9 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
               name={field.name}
               checked={(value as boolean) || false}
               onChange={(e) => onChange(field.name, e.target.checked)}
-              className="w-5 h-5 mt-1 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              className="w-5 h-5 mt-0.5 text-[#25DC7F] rounded border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
             />
-            <span className="text-gray-700 dark:text-gray-300">{field.label}</span>
+            <span className="text-[#1A1A1A]">{field.label}</span>
           </label>
         );
 
@@ -121,7 +127,11 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
             {field.options?.map((option) => (
               <label
                 key={option.value}
-                className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all duration-150 ${
+                  value === option.value
+                    ? 'border-[#25DC7F] bg-[#25DC7F]/5'
+                    : 'border-[#E6E8EA] hover:border-[#A0A0A0]'
+                }`}
               >
                 <input
                   type="radio"
@@ -129,9 +139,9 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
                   value={option.value}
                   checked={value === option.value}
                   onChange={(e) => onChange(field.name, e.target.value)}
-                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  className="w-5 h-5 text-[#25DC7F] border-[#E6E8EA] focus:ring-[#25DC7F] focus:ring-offset-0"
                 />
-                <span className="text-gray-700 dark:text-gray-300">{option.label}</span>
+                <span className="text-[#1A1A1A]">{option.label}</span>
               </label>
             ))}
           </div>
@@ -144,21 +154,6 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
 
   return (
     <div className="space-y-6">
-      {/* Step Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          {step.title}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          {step.description}
-        </p>
-        {step.estimatedTime && (
-          <p className="text-sm text-gray-500 mt-1">
-            Estimated time: {step.estimatedTime}
-          </p>
-        )}
-      </div>
-
       {/* Fields */}
       <div className="space-y-6">
         {step.fields.map((field) => {
@@ -168,10 +163,10 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
               <div key={field.name}>
                 {renderField(field)}
                 {field.helpText && (
-                  <p className="mt-1 text-sm text-gray-500 ml-8">{field.helpText}</p>
+                  <p className="mt-2 text-sm text-[#6B6B6B] ml-8">{field.helpText}</p>
                 )}
                 {errors[field.name] && (
-                  <p className="mt-1 text-sm text-red-600 ml-8">{errors[field.name]}</p>
+                  <p className="mt-1 text-sm text-[#E5484D] ml-8">{errors[field.name]}</p>
                 )}
               </div>
             );
@@ -181,17 +176,17 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
             <div key={field.name}>
               <label
                 htmlFor={field.name}
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-semibold text-[#0B0B0B] mb-2"
               >
                 {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
+                {field.required && <span className="text-[#E5484D] ml-1">*</span>}
               </label>
               {renderField(field)}
               {field.helpText && (
-                <p className="mt-1 text-sm text-gray-500">{field.helpText}</p>
+                <p className="mt-2 text-sm text-[#6B6B6B]">{field.helpText}</p>
               )}
               {errors[field.name] && (
-                <p className="mt-1 text-sm text-red-600">{errors[field.name]}</p>
+                <p className="mt-1 text-sm text-[#E5484D]">{errors[field.name]}</p>
               )}
             </div>
           );

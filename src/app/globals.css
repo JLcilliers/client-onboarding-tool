@@ -1,29 +1,54 @@
 @import "tailwindcss";
 
+/* Clixsy Brand Tokens */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary Colors */
+  --clix-green: #25DC7F;
+  --clix-green-2: #569077;
+  --clix-green-dark: #1DB96A;
+
+  /* Header/Nav Dark Green */
+  --clix-header: #0F1A14;
+  --clix-header-light: #1A2A1F;
+
+  /* Neutrals */
+  --ink: #0B0B0B;
+  --text: #1A1A1A;
+  --muted: #6B6B6B;
+  --border: #E6E8EA;
+  --bg: #FFFFFF;
+  --bg-soft: #F4F5F6;
+
+  /* State Colors */
+  --focus: #25DC7F;
+  --danger: #E5484D;
+  --warning: #F5A524;
+  --info: #3B82F6;
+  --success: #25DC7F;
+
+  /* Legacy mappings */
+  --background: #F4F5F6;
+  --foreground: #1A1A1A;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Libre Franklin', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --animate-spin-slow: spin-slow 1.5s linear infinite;
+
+  /* Clixsy color tokens for Tailwind */
+  --color-clix-green: var(--clix-green);
+  --color-clix-green-2: var(--clix-green-2);
+  --color-clix-header: var(--clix-header);
+  --color-clix-header-light: var(--clix-header-light);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Remove dark mode - Clixsy uses light mode */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-soft);
+  color: var(--text);
+  font-family: 'Libre Franklin', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
 /* Custom animations */
@@ -38,4 +63,71 @@ body {
 
 .animate-spin-slow {
   animation: spin-slow 1.5s linear infinite;
+}
+
+/* Clixsy Button Styles */
+.btn-primary {
+  background-color: var(--clix-green);
+  color: white;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 14px 22px;
+  transition: all 150ms ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--clix-green-dark);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 12px 20px;
+  transition: all 150ms ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-soft);
+}
+
+/* Focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--clix-green) !important;
+  box-shadow: 0 0 0 3px rgba(37, 220, 127, 0.15);
+}
+
+/* Checkbox and radio styling */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background-color: var(--clix-green);
+  border-color: var(--clix-green);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-soft);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }

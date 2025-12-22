@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
+const CLIXSY_LOGO_URL = 'https://res.cloudinary.com/dovgh19xr/image/upload/v1766427227/new_logo_nvrux0.svg';
+
 interface SpinnerInterstitialProps {
-  logoUrl?: string | null;
   message?: string;
   duration?: number;
   onComplete?: () => void;
 }
 
 export default function SpinnerInterstitial({
-  logoUrl,
   message = 'Saving your progress...',
   duration = 1200,
   onComplete,
@@ -29,31 +29,33 @@ export default function SpinnerInterstitial({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col items-center justify-center">
-      <div className="flex flex-col items-center gap-6">
-        {/* Logo with spin animation */}
+    <div className="fixed inset-0 bg-[#0F1A14] z-50 flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center gap-8">
+        {/* Logo */}
         <div className="relative">
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt="Company Logo"
-              className="w-24 h-24 object-contain animate-spin-slow"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-          )}
+          <img
+            src={CLIXSY_LOGO_URL}
+            alt="Clixsy"
+            className="h-12 object-contain"
+          />
+        </div>
+
+        {/* Spinner ring */}
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 border-4 border-[#1A2A1F] rounded-full" />
+          <div className="absolute inset-0 border-4 border-transparent border-t-[#25DC7F] rounded-full animate-spin" />
         </div>
 
         {/* Message */}
-        <p className="text-gray-600 dark:text-gray-300 text-lg font-medium animate-pulse">
+        <p className="text-[#569077] text-lg font-medium">
           {message}
         </p>
 
         {/* Progress dots */}
         <div className="flex gap-2">
-          <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 bg-[#25DC7F] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 bg-[#25DC7F] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 bg-[#25DC7F] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
