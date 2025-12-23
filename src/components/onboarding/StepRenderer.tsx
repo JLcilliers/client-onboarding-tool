@@ -9,8 +9,70 @@ interface StepRendererProps {
   onChange: (name: string, value: unknown) => void;
 }
 
+// Helper function to convert YouTube URL to embed URL
+function getYouTubeEmbedUrl(url: string): string | null {
+  // Handle youtu.be format
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+  // Handle youtube.com/watch?v= format
+  const longMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+  if (longMatch) {
+    return `https://www.youtube.com/embed/${longMatch[1]}`;
+  }
+  // Handle youtube.com/embed/ format (already embedded)
+  if (url.includes('youtube.com/embed/')) {
+    return url.split('?')[0]; // Remove any query params
+  }
+  return null;
+}
+
+// Video Tutorial Component
+function VideoTutorial({ url, title }: { url: string; title: string }) {
+  const embedUrl = getYouTubeEmbedUrl(url);
+
+  if (!embedUrl) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 text-sm text-[#25DC7F] hover:text-[#1eb86a] font-medium"
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+        </svg>
+        {title}
+      </a>
+    );
+  }
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2 mb-2">
+        <svg className="w-5 h-5 text-[#E5484D]" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+        </svg>
+        <span className="text-sm font-semibold text-[#0B0B0B]">{title}</span>
+      </div>
+      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-[#E6E8EA] bg-black">
+        <iframe
+          src={embedUrl}
+          title={title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full"
+        />
+      </div>
+    </div>
+  );
+}
+
 // Determine if a field should span both columns (full width)
 function shouldSpanFullWidth(field: OnboardingField): boolean {
+  // Fields with video tutorials always span full width
+  if (field.videoUrl) return true;
   // Textarea always spans full width
   if (field.type === 'textarea') return true;
   // Multiselect and radio with options span full width (they have vertical options)
@@ -183,6 +245,10 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
           if (field.type === 'checkbox') {
             return (
               <div key={field.name} className={spanFull ? 'md:col-span-2' : ''}>
+                {/* Video Tutorial - shown above the field */}
+                {field.videoUrl && field.videoTitle && (
+                  <VideoTutorial url={field.videoUrl} title={field.videoTitle} />
+                )}
                 {renderField(field)}
                 {field.helpText && (
                   <p className="mt-1 text-xs text-[#6B6B6B] ml-8">{field.helpText}</p>
@@ -196,6 +262,10 @@ export default function StepRenderer({ step, values, errors, onChange }: StepRen
 
           return (
             <div key={field.name} className={spanFull ? 'md:col-span-2' : ''}>
+              {/* Video Tutorial - shown above the field */}
+              {field.videoUrl && field.videoTitle && (
+                <VideoTutorial url={field.videoUrl} title={field.videoTitle} />
+              )}
               <label
                 htmlFor={field.name}
                 className="block text-sm font-semibold text-[#0B0B0B] mb-1.5"

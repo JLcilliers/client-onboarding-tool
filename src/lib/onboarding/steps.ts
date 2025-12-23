@@ -13,6 +13,8 @@ export interface OnboardingField {
   options?: { value: string; label: string }[];
   helpText?: string;
   dependsOn?: { field: string; value: string | boolean };
+  videoUrl?: string;
+  videoTitle?: string;
 }
 
 export interface OnboardingStep {
@@ -910,7 +912,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'will_do', label: 'I\'ll do this after' },
           { value: 'need_help', label: 'I need help with this' }
         ],
-        helpText: 'Add tempclixsyreports@gmail.com as an Editor.'
+        helpText: 'Go to https://analytics.google.com and add tempclixsyreports@gmail.com as OWNER.',
+        videoUrl: 'https://youtu.be/8nWZRo_l8bs',
+        videoTitle: 'Tutorial - How to add admin user to Google Analytics'
       },
       {
         name: 'gsc_access_granted',
@@ -922,7 +926,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'need_help', label: 'I need help with this' },
           { value: 'not_setup', label: 'Not set up yet' }
         ],
-        helpText: 'Add tempclixsyreports@gmail.com as an Owner.'
+        helpText: 'Go to https://search.google.com/search-console/welcome and add tempclixsyreports@gmail.com as OWNER.',
+        videoUrl: 'https://youtu.be/17KmgnPz-K4',
+        videoTitle: 'Tutorial - How to add admin user to Google Search Console'
       },
       {
         name: 'gbp_access_granted',
@@ -934,7 +940,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'need_help', label: 'I need help with this' },
           { value: 'no_gbp', label: 'I don\'t have a GBP' }
         ],
-        helpText: 'Add tempclixsyreports@gmail.com as a Manager.'
+        helpText: 'Go to https://business.google.com and add tempclixsyreports@gmail.com as OWNER.',
+        videoUrl: 'https://youtu.be/0Vb6v8YA3AY?si=PD9PU-VYRP-n1yLz',
+        videoTitle: 'Tutorial - How to add admin user to Google Business Profile'
       },
     ]
   },
@@ -960,7 +968,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'need_help', label: 'I need help with this' },
           { value: 'not_wordpress', label: 'My site isn\'t WordPress' }
         ],
-        helpText: 'Create an Administrator account for keith@clixsy.com'
+        helpText: 'Go to https://yourdomain/wp-admin and add keith@clixsy.com as ADMINISTRATOR.',
+        videoUrl: 'https://youtu.be/pxB2YB1578Q',
+        videoTitle: 'Tutorial - How to grant admin access to WordPress'
       },
       {
         name: 'domain_registrar_access',
@@ -972,7 +982,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'need_help', label: 'I need help with this' },
           { value: 'will_share_login', label: 'I\'ll share login details separately' }
         ],
-        helpText: 'Delegate access or share login details for domain management.'
+        helpText: 'Share your Domain Registrar (eg GoDaddy) username/password, or delegate access to corey@clixsy.com.',
+        videoUrl: 'https://youtu.be/ProhJAnO9ms',
+        videoTitle: 'Tutorial - How to delegate access to Domain Registrar'
       },
       {
         name: 'dns_access_granted',
@@ -984,7 +996,9 @@ export const onboardingSteps: OnboardingStep[] = [
           { value: 'need_help', label: 'I need help with this' },
           { value: 'same_as_domain', label: 'Same as domain registrar' }
         ],
-        helpText: 'Add tempclixsyreports@gmail.com to your DNS provider (e.g., Cloudflare).'
+        helpText: 'Go to https://dash.cloudflare.com and add tempclixsyreports@gmail.com.',
+        videoUrl: 'https://youtu.be/s7AS0XYR0KI',
+        videoTitle: 'Tutorial - How to delegate access to Cloudflare'
       },
     ]
   },
