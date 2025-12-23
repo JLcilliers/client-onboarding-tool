@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { onboardingSteps, validateStepData, getMissingRequiredFields } from '@/lib/onboarding/steps';
 import StepRenderer from './StepRenderer';
 import SpinnerInterstitial from './SpinnerInterstitial';
@@ -39,6 +39,11 @@ export default function Wizard({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(sessionStatus === 'submitted');
+
+  // Scroll navigation state
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const currentStep = onboardingSteps[currentStepIndex];
   const stepAnswers = answers[currentStep?.key] || {};
@@ -251,6 +256,56 @@ export default function Wizard({
   const progressPercentage = ((currentStepIndex + 1) / onboardingSteps.length) * 100;
   const completedPercentage = (completedStepsState.length / onboardingSteps.length) * 100;
 
+  // Update scroll indicators
+  const updateScrollIndicators = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setCanScrollLeft(scrollLeft > 5);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+  }, []);
+
+  // Scroll navigation handlers
+  const scrollNav = useCallback((direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = 200;
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  }, []);
+
+  // Scroll current step into view on mount and step change
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Find the current step button and scroll it into view
+    const buttons = container.querySelectorAll('button');
+    const currentButton = buttons[currentStepIndex];
+    if (currentButton) {
+      currentButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+
+    // Update scroll indicators after scrolling
+    const timer = setTimeout(updateScrollIndicators, 300);
+    return () => clearTimeout(timer);
+  }, [currentStepIndex, updateScrollIndicators]);
+
+  // Add scroll event listener
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', updateScrollIndicators);
+    updateScrollIndicators(); // Initial check
+
+    return () => container.removeEventListener('scroll', updateScrollIndicators);
+  }, [updateScrollIndicators]);
+
   // If submitted, show thank you screen
   if (isSubmitted) {
     return (
@@ -400,35 +455,77 @@ export default function Wizard({
               </div>
             </div>
 
-            {/* Icon Step Navigator */}
-            <div className="flex items-center justify-start gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#569077] scrollbar-track-[#1A2A1F]">
-              {onboardingSteps.map((step, index) => {
-                const isCompleted = completedStepsState.includes(step.key);
-                const isCurrent = index === currentStepIndex;
+            {/* Icon Step Navigator with scroll controls */}
+            <div className="relative flex items-center">
+              {/* Left scroll button */}
+              <button
+                onClick={() => scrollNav('left')}
+                className={`absolute left-0 z-10 flex items-center justify-center w-8 h-10 bg-gradient-to-r from-[#0F1A14] via-[#0F1A14] to-transparent transition-opacity ${
+                  canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                aria-label="Scroll left"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
 
-                return (
-                  <button
-                    key={step.key}
-                    onClick={() => navigateToStep(index)}
-                    className={`group relative flex-shrink-0 w-10 h-10 rounded-lg transition-all cursor-pointer flex items-center justify-center ${
-                      isCompleted
-                        ? 'bg-[#25DC7F] text-white'
-                        : isCurrent
-                        ? 'bg-white text-[#0F1A14] ring-2 ring-[#25DC7F]'
-                        : 'bg-[#1A2A1F] text-[#569077] hover:bg-[#25DC7F]/20 hover:text-[#25DC7F]'
-                    }`}
-                    title={step.title}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
-                    </svg>
-                    {/* Tooltip */}
-                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0B0B0B] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                      {step.title}
-                    </span>
-                  </button>
-                );
-              })}
+              {/* Left fade indicator */}
+              <div className={`absolute left-8 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0F1A14] to-transparent z-[5] pointer-events-none transition-opacity ${
+                canScrollLeft ? 'opacity-100' : 'opacity-0'
+              }`} />
+
+              {/* Scrollable container */}
+              <div
+                ref={scrollContainerRef}
+                className="flex items-center gap-2 overflow-x-auto px-10 py-2 scroll-smooth hide-scrollbar"
+              >
+                {onboardingSteps.map((step, index) => {
+                  const isCompleted = completedStepsState.includes(step.key);
+                  const isCurrent = index === currentStepIndex;
+
+                  return (
+                    <button
+                      key={step.key}
+                      onClick={() => navigateToStep(index)}
+                      className={`group relative flex-shrink-0 w-10 h-10 rounded-lg transition-all cursor-pointer flex items-center justify-center ${
+                        isCompleted
+                          ? 'bg-[#25DC7F] text-white'
+                          : isCurrent
+                          ? 'bg-white text-[#0F1A14] ring-2 ring-[#25DC7F]'
+                          : 'bg-[#1A2A1F] text-[#569077] hover:bg-[#25DC7F]/20 hover:text-[#25DC7F]'
+                      }`}
+                      title={step.title}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d={step.icon} />
+                      </svg>
+                      {/* Tooltip */}
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-[#0B0B0B] text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                        {step.title}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right fade indicator */}
+              <div className={`absolute right-8 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0F1A14] to-transparent z-[5] pointer-events-none transition-opacity ${
+                canScrollRight ? 'opacity-100' : 'opacity-0'
+              }`} />
+
+              {/* Right scroll button */}
+              <button
+                onClick={() => scrollNav('right')}
+                className={`absolute right-0 z-10 flex items-center justify-center w-8 h-10 bg-gradient-to-l from-[#0F1A14] via-[#0F1A14] to-transparent transition-opacity ${
+                  canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                aria-label="Scroll right"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </header>
