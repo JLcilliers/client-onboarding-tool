@@ -882,15 +882,15 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 20: GOOGLE ACCESS
+  // STEP 20: GOOGLE ANALYTICS ACCESS
   // -----------------------------------------------
   {
-    key: 'google_access',
-    icon: STEP_ICONS.cog,
-    title: 'Google Access',
-    shortTitle: 'GOOGLE',
-    description: 'Grant us access to your Google accounts.',
-    estimatedTime: '3 min',
+    key: 'google_analytics_access',
+    icon: STEP_ICONS.chartBar,
+    title: 'Google Analytics Access',
+    shortTitle: 'ANALYTICS',
+    description: 'Grant us access to your Google Analytics.',
+    estimatedTime: '2 min',
     fields: [
       {
         name: 'has_google_analytics',
@@ -916,6 +916,20 @@ export const onboardingSteps: OnboardingStep[] = [
         videoUrl: 'https://youtu.be/8nWZRo_l8bs',
         videoTitle: 'Tutorial - How to add admin user to Google Analytics'
       },
+    ]
+  },
+
+  // -----------------------------------------------
+  // STEP 21: GOOGLE SEARCH CONSOLE ACCESS
+  // -----------------------------------------------
+  {
+    key: 'google_search_console_access',
+    icon: STEP_ICONS.magnifyingGlass,
+    title: 'Google Search Console Access',
+    shortTitle: 'SEARCH',
+    description: 'Grant us access to your Google Search Console.',
+    estimatedTime: '2 min',
+    fields: [
       {
         name: 'gsc_access_granted',
         label: 'Google Search Console access status',
@@ -930,6 +944,20 @@ export const onboardingSteps: OnboardingStep[] = [
         videoUrl: 'https://youtu.be/17KmgnPz-K4',
         videoTitle: 'Tutorial - How to add admin user to Google Search Console'
       },
+    ]
+  },
+
+  // -----------------------------------------------
+  // STEP 22: GOOGLE BUSINESS PROFILE ACCESS
+  // -----------------------------------------------
+  {
+    key: 'google_business_profile_access',
+    icon: STEP_ICONS.building,
+    title: 'Google Business Profile Access',
+    shortTitle: 'GBP',
+    description: 'Grant us access to your Google Business Profile.',
+    estimatedTime: '2 min',
+    fields: [
       {
         name: 'gbp_access_granted',
         label: 'Google Business Profile access status',
@@ -948,14 +976,14 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 21: WEBSITE ACCESS
+  // STEP 23: WORDPRESS ACCESS
   // -----------------------------------------------
   {
-    key: 'website_access',
-    icon: STEP_ICONS.key,
-    title: 'Website Access',
-    shortTitle: 'ACCESS',
-    description: 'Grant us access to your website.',
+    key: 'wordpress_access',
+    icon: STEP_ICONS.computerDesktop,
+    title: 'WordPress Access',
+    shortTitle: 'WORDPRESS',
+    description: 'Grant us admin access to your WordPress site.',
     estimatedTime: '2 min',
     fields: [
       {
@@ -972,8 +1000,22 @@ export const onboardingSteps: OnboardingStep[] = [
         videoUrl: 'https://youtu.be/pxB2YB1578Q',
         videoTitle: 'Tutorial - How to grant admin access to WordPress'
       },
+    ]
+  },
+
+  // -----------------------------------------------
+  // STEP 24: DOMAIN REGISTRAR ACCESS
+  // -----------------------------------------------
+  {
+    key: 'domain_registrar_access',
+    icon: STEP_ICONS.globe,
+    title: 'Domain Registrar Access',
+    shortTitle: 'DOMAIN',
+    description: 'Grant us access to your domain registrar.',
+    estimatedTime: '2 min',
+    fields: [
       {
-        name: 'domain_registrar_access',
+        name: 'domain_registrar_access_status',
         label: 'Domain registrar access status',
         type: 'radio',
         options: [
@@ -986,6 +1028,20 @@ export const onboardingSteps: OnboardingStep[] = [
         videoUrl: 'https://youtu.be/ProhJAnO9ms',
         videoTitle: 'Tutorial - How to delegate access to Domain Registrar'
       },
+    ]
+  },
+
+  // -----------------------------------------------
+  // STEP 25: CLOUDFLARE/DNS ACCESS
+  // -----------------------------------------------
+  {
+    key: 'cloudflare_access',
+    icon: STEP_ICONS.cog,
+    title: 'Cloudflare / DNS Access',
+    shortTitle: 'DNS',
+    description: 'Grant us access to your DNS provider.',
+    estimatedTime: '2 min',
+    fields: [
       {
         name: 'dns_access_granted',
         label: 'DNS access status',
@@ -1004,7 +1060,7 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 22: OTHER ACCESS
+  // STEP 26: OTHER ACCESS
   // -----------------------------------------------
   {
     key: 'other_access',
@@ -1056,7 +1112,7 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 23: PREVIOUS AGENCY
+  // STEP 27: PREVIOUS AGENCY
   // -----------------------------------------------
   {
     key: 'previous_agency',
@@ -1098,7 +1154,7 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 24: WELCOME GIFT
+  // STEP 28: WELCOME GIFT
   // -----------------------------------------------
   {
     key: 'welcome_gift',
@@ -1141,7 +1197,7 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 25: ALMOST THERE (Review Missing Items)
+  // STEP 29: ALMOST THERE (Review Missing Items)
   // -----------------------------------------------
   {
     key: 'almost_there',
@@ -1155,7 +1211,7 @@ export const onboardingSteps: OnboardingStep[] = [
   },
 
   // -----------------------------------------------
-  // STEP 26: FINAL CONFIRMATION
+  // STEP 30: FINAL CONFIRMATION
   // -----------------------------------------------
   {
     key: 'final_review',
@@ -1319,16 +1375,28 @@ export const stepValidationSchemas: Record<string, z.ZodSchema> = {
     additional_report_recipients: optionalString,
   }),
 
-  google_access: z.object({
+  google_analytics_access: z.object({
     has_google_analytics: optionalString,
     ga_access_granted: optionalString,
+  }),
+
+  google_search_console_access: z.object({
     gsc_access_granted: optionalString,
+  }),
+
+  google_business_profile_access: z.object({
     gbp_access_granted: optionalString,
   }),
 
-  website_access: z.object({
+  wordpress_access: z.object({
     wordpress_access_granted: optionalString,
-    domain_registrar_access: optionalString,
+  }),
+
+  domain_registrar_access: z.object({
+    domain_registrar_access_status: optionalString,
+  }),
+
+  cloudflare_access: z.object({
     dns_access_granted: optionalString,
   }),
 
