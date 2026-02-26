@@ -484,7 +484,7 @@ export default function Wizard({
             </div>
 
             {/* Icon Step Navigator with scroll controls */}
-            <div className="relative flex items-center">
+            <div className="relative flex items-center justify-center">
               {/* Left scroll button */}
               <button
                 onClick={() => scrollNav('left')}
@@ -506,7 +506,7 @@ export default function Wizard({
               {/* Scrollable container */}
               <div
                 ref={scrollContainerRef}
-                className="flex items-center gap-2 overflow-x-auto px-10 py-2 scroll-smooth hide-scrollbar"
+                className="flex items-center justify-center gap-2 overflow-x-auto px-10 py-2 scroll-smooth hide-scrollbar w-full"
               >
                 {steps.map((step, index) => {
                   const isCompleted = completedStepsState.includes(step.key);
