@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionByToken, getSessionAnswers, getSignedLogoUrl, createAuditEvent } from '@/lib/supabase/server';
-import { onboardingSteps } from '@/lib/onboarding/steps';
+import { getStepsForVersion } from '@/lib/onboarding/flow-version';
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,23 +48,26 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const steps = getStepsForVersion(session.flow_version);
+
     return NextResponse.json({
       session: {
         id: session.id,
         status: session.status,
         currentStep: session.current_step,
+        flowVersion: session.flow_version || 'v1',
         logoUrl,
         lastSavedAt: session.last_saved_at,
         submittedAt: session.submitted_at,
       },
       answers: answersByStep,
-      steps: onboardingSteps.map(step => ({
+      steps: steps.map(step => ({
         key: step.key,
         title: step.title,
         description: step.description,
         estimatedTime: step.estimatedTime,
       })),
-      totalSteps: onboardingSteps.length,
+      totalSteps: steps.length,
     });
   } catch (error) {
     console.error('Error fetching session:', error);

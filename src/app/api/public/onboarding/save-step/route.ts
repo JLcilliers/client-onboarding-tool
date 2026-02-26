@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionByToken, upsertAnswer, updateSessionStep, createAuditEvent } from '@/lib/supabase/server';
-import { validateStepData, getStepIndex } from '@/lib/onboarding/steps';
+import { validateStepDataForVersion } from '@/lib/onboarding/flow-version';
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Validate step data if marking as completed
     if (completed) {
-      const validation = validateStepData(stepKey, answers);
+      const validation = validateStepDataForVersion(session.flow_version || 'v1', stepKey, answers);
       if (!validation.success) {
         return NextResponse.json(
           { error: 'Validation failed', validationErrors: validation.errors },

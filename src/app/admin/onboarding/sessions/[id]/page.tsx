@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { onboardingSteps } from '@/lib/onboarding/steps';
+import { getStepsForVersion } from '@/lib/onboarding/flow-version';
 
 const CLIXSY_LOGO_URL = 'https://res.cloudinary.com/dovgh19xr/image/upload/v1766427227/new_logo_nvrux0.svg';
 
@@ -16,6 +16,7 @@ interface SessionDetail {
   id: string;
   token: string;
   status: 'draft' | 'in_progress' | 'submitted';
+  flow_version?: 'v1' | 'v2';
   current_step: number;
   last_saved_at: string | null;
   submitted_at: string | null;
@@ -94,13 +95,17 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     fetchSessionDetail();
   }, [id]);
 
+  // Get version-aware steps
+  const flowVersion = session?.flow_version || 'v1';
+  const onboardingSteps = useMemo(() => getStepsForVersion(flowVersion), [flowVersion]);
+
   // Calculate progress stats
   const progressStats = useMemo(() => {
     const completedSteps = answers.filter(a => a.completed).length;
     const totalSteps = onboardingSteps.length;
     const progressPercent = Math.round((completedSteps / totalSteps) * 100);
     return { completedSteps, totalSteps, progressPercent };
-  }, [answers]);
+  }, [answers, onboardingSteps]);
 
   const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '-';

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { computeAccessChecklist, AnswersByStep } from '@/lib/onboarding/accessChecklist';
-
-const TOTAL_STEPS = 12;
+import { computeAccessChecklistV2 } from '@/lib/onboarding/accessChecklist-v2';
+import { getStepsForVersion } from '@/lib/onboarding/flow-version';
 
 interface ClientData {
   client_name: string;
@@ -14,6 +14,7 @@ interface SessionWithClient {
   id: string;
   token: string;
   status: string;
+  flow_version: string;
   current_step: number;
   last_saved_at: string | null;
   submitted_at: string | null;
@@ -39,6 +40,7 @@ export async function GET() {
         id,
         token,
         status,
+        flow_version,
         current_step,
         last_saved_at,
         submitted_at,
@@ -88,23 +90,28 @@ export async function GET() {
 
     // Transform and enrich sessions with progress data and access checklist
     const enrichedSessions = (sessionsData || []).map(session => {
+      const flowVersion = session.flow_version || 'v1';
+      const totalSteps = getStepsForVersion(flowVersion).length;
       const completedSteps = completedStepsMap[session.id] || 0;
-      const progressPercent = Math.round((completedSteps / TOTAL_STEPS) * 100);
+      const progressPercent = Math.round((completedSteps / totalSteps) * 100);
 
-      // Compute access checklist for this session
+      // Compute access checklist for this session (version-aware)
       const answersByStep = answersBySessionMap[session.id] || {};
-      const accessChecklist = computeAccessChecklist(answersByStep);
+      const accessChecklist = flowVersion === 'v2'
+        ? computeAccessChecklistV2(answersByStep)
+        : computeAccessChecklist(answersByStep);
 
       return {
         id: session.id,
         token: session.token,
         status: session.status,
+        flowVersion,
         currentStep: session.current_step,
         lastSavedAt: session.last_saved_at,
         submittedAt: session.submitted_at,
         createdAt: session.created_at,
         completedSteps,
-        totalSteps: TOTAL_STEPS,
+        totalSteps,
         progressPercent,
         clientName: Array.isArray(session.clients)
           ? session.clients[0]?.client_name || 'Unknown Client'

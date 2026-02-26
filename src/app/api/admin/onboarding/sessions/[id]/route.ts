@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { computeAccessChecklist, generateMissingAccessText, AnswersByStep } from '@/lib/onboarding/accessChecklist';
+import { computeAccessChecklistV2 } from '@/lib/onboarding/accessChecklist-v2';
 
 interface AnswerRow {
   step_key: string;
@@ -24,6 +25,7 @@ export async function GET(
         id,
         token,
         status,
+        flow_version,
         current_step,
         last_saved_at,
         submitted_at,
@@ -71,8 +73,11 @@ export async function GET(
       answersByStep[answer.step_key] = answer.answers || {};
     });
 
-    // Compute access checklist
-    const accessChecklist = computeAccessChecklist(answersByStep);
+    // Compute access checklist (version-aware)
+    const flowVersion = (transformedSession as Record<string, unknown>).flow_version as string || 'v1';
+    const accessChecklist = flowVersion === 'v2'
+      ? computeAccessChecklistV2(answersByStep)
+      : computeAccessChecklist(answersByStep);
     const missingAccessText = generateMissingAccessText(accessChecklist);
 
     return NextResponse.json({

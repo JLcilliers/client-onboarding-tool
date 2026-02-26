@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
         token,
         status: 'draft',
         current_step: 0,
+        flow_version: 'v2',
       });
 
     if (sessionError) {

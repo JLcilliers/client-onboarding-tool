@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { onboardingSteps, validateStepData, getMissingRequiredFields } from '@/lib/onboarding/steps';
+import { getStepsForVersion, validateStepDataForVersion, getMissingRequiredFieldsForVersion } from '@/lib/onboarding/flow-version';
 import StepRenderer from './StepRenderer';
 import SpinnerInterstitial from './SpinnerInterstitial';
+import AccessChecklistStep from './AccessChecklistStep';
 
 const CLIXSY_LOGO_URL = 'https://res.cloudinary.com/dovgh19xr/image/upload/v1766427227/new_logo_nvrux0.svg';
 
@@ -12,6 +13,7 @@ interface WizardProps {
   initialStep: number;
   initialAnswers: Record<string, { answers: Record<string, unknown>; completed: boolean }>;
   sessionStatus: 'draft' | 'in_progress' | 'submitted';
+  flowVersion?: 'v1' | 'v2';
 }
 
 export default function Wizard({
@@ -19,7 +21,9 @@ export default function Wizard({
   initialStep,
   initialAnswers,
   sessionStatus,
+  flowVersion = 'v1',
 }: WizardProps) {
+  const steps = useMemo(() => getStepsForVersion(flowVersion), [flowVersion]);
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStep);
   const [answers, setAnswers] = useState<Record<string, Record<string, unknown>>>(() => {
     const initial: Record<string, Record<string, unknown>> = {};
@@ -45,13 +49,13 @@ export default function Wizard({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const currentStep = onboardingSteps[currentStepIndex];
+  const currentStep = steps[currentStepIndex];
   const stepAnswers = answers[currentStep?.key] || {};
 
   // Calculate missing required fields
   const missingFields = useMemo(() => {
-    return getMissingRequiredFields(answers);
-  }, [answers]);
+    return getMissingRequiredFieldsForVersion(flowVersion, answers);
+  }, [answers, flowVersion]);
 
   // Check if all required fields are complete (for blocking submission)
   const canSubmit = missingFields.length === 0;
@@ -138,7 +142,7 @@ export default function Wizard({
   const handleNext = async () => {
     // Skip validation for review step
     if (!currentStep.isReviewStep) {
-      const validation = validateStepData(currentStep.key, stepAnswers);
+      const validation = validateStepDataForVersion(flowVersion, currentStep.key, stepAnswers);
       if (!validation.success && validation.errors) {
         setErrors(validation.errors);
         return;
@@ -160,7 +164,7 @@ export default function Wizard({
   // Handle spinner complete - move to next step
   const handleSpinnerComplete = () => {
     setShowSpinner(false);
-    if (currentStepIndex < onboardingSteps.length - 1) {
+    if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -190,7 +194,7 @@ export default function Wizard({
     }
 
     // Validate final step
-    const validation = validateStepData(currentStep.key, stepAnswers);
+    const validation = validateStepDataForVersion(flowVersion, currentStep.key, stepAnswers);
     if (!validation.success && validation.errors) {
       setErrors(validation.errors);
       return;
@@ -259,8 +263,8 @@ export default function Wizard({
   };
 
   // Calculate progress percentage
-  const progressPercentage = ((currentStepIndex + 1) / onboardingSteps.length) * 100;
-  const completedPercentage = (completedStepsState.length / onboardingSteps.length) * 100;
+  const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
+  const completedPercentage = (completedStepsState.length / steps.length) * 100;
 
   // Update scroll indicators
   const updateScrollIndicators = useCallback(() => {
@@ -450,7 +454,7 @@ export default function Wizard({
             {/* Progress Bar */}
             <div className="mb-4">
               <div className="flex items-center justify-between text-sm text-[#A0A0A0] mb-2">
-                <span>Step {currentStepIndex + 1} of {onboardingSteps.length}</span>
+                <span>Step {currentStepIndex + 1} of {steps.length}</span>
                 <span>{Math.round(completedPercentage)}% complete</span>
               </div>
               <div className="h-2 bg-[#1A2A1F] rounded-full overflow-hidden">
@@ -486,7 +490,7 @@ export default function Wizard({
                 ref={scrollContainerRef}
                 className="flex items-center gap-2 overflow-x-auto px-10 py-2 scroll-smooth hide-scrollbar"
               >
-                {onboardingSteps.map((step, index) => {
+                {steps.map((step, index) => {
                   const isCompleted = completedStepsState.includes(step.key);
                   const isCurrent = index === currentStepIndex;
 
@@ -569,7 +573,13 @@ export default function Wizard({
             )}
 
             {/* Step Content */}
-            {currentStep.isReviewStep ? (
+            {currentStep.key === 'access_checklist' ? (
+              <AccessChecklistStep
+                values={stepAnswers}
+                errors={errors}
+                onChange={handleFieldChange}
+              />
+            ) : currentStep.isReviewStep ? (
               renderAlmostThereStep()
             ) : (
               <StepRenderer
@@ -622,7 +632,7 @@ export default function Wizard({
             </div>
 
             {/* Next/Submit Button */}
-            {currentStepIndex === onboardingSteps.length - 1 ? (
+            {currentStepIndex === steps.length - 1 ? (
               <button
                 onClick={handleSubmit}
                 disabled={isSaving || !canSubmit}

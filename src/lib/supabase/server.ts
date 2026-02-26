@@ -26,6 +26,7 @@ export interface OnboardingSession {
   client_id: string;
   token: string;
   status: 'draft' | 'in_progress' | 'submitted';
+  flow_version: 'v1' | 'v2';
   current_step: number;
   last_saved_at: string | null;
   submitted_at: string | null;

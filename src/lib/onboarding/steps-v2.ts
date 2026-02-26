@@ -1,0 +1,835 @@
+import { z } from 'zod';
+import type { OnboardingStep } from './steps';
+import { STEP_ICONS } from './steps';
+
+// =============================================
+// V2 ONBOARDING STEP DEFINITIONS (12 steps, 66 questions)
+// Consolidation of v1's 30 steps per Option B spec
+// =============================================
+
+export const onboardingStepsV2: OnboardingStep[] = [
+  // -----------------------------------------------
+  // STEP 1: PRIMARY CONTACT (from v1 step 1)
+  // -----------------------------------------------
+  {
+    key: 'primary_contact',
+    title: 'Primary Contact',
+    shortTitle: 'PRIMARY',
+    description: 'Who is the main decision maker for this project?',
+    estimatedTime: '1 min',
+    icon: STEP_ICONS.user,
+    fields: [
+      {
+        name: 'main_contact_name',
+        label: 'Full Name',
+        type: 'text',
+        required: true,
+        placeholder: 'John Smith',
+        helpText: 'This should be the person with ultimate authority over the project.',
+      },
+      {
+        name: 'main_contact_title',
+        label: 'Title/Role',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'owner', label: 'Owner / Managing Partner' },
+          { value: 'partner', label: 'Partner' },
+          { value: 'marketing_director', label: 'Marketing Director' },
+          { value: 'office_manager', label: 'Office Manager' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+      { name: 'main_contact_email', label: 'Email Address', type: 'email', required: true, placeholder: 'john@example.com' },
+      { name: 'main_contact_phone', label: 'Best Contact Number', type: 'tel', required: true, placeholder: '(555) 123-4567' },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 2: OTHER CONTACTS (from v1 steps 2+3)
+  // -----------------------------------------------
+  {
+    key: 'other_contacts',
+    title: 'Other Contacts',
+    shortTitle: 'CONTACTS',
+    description: 'Who else should we contact for day-to-day or technical matters?',
+    estimatedTime: '2 min',
+    icon: STEP_ICONS.users,
+    fields: [
+      {
+        name: 'has_secondary_contact',
+        label: 'Do you have a secondary contact for day-to-day matters?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No, primary contact handles everything' },
+        ],
+      },
+      {
+        name: 'secondary_contact_name',
+        label: 'Secondary Contact - Full Name',
+        type: 'text',
+        dependsOn: { field: 'has_secondary_contact', value: 'yes' },
+      },
+      {
+        name: 'secondary_contact_email',
+        label: 'Secondary Contact - Email',
+        type: 'text',
+        dependsOn: { field: 'has_secondary_contact', value: 'yes' },
+      },
+      {
+        name: 'secondary_contact_phone',
+        label: 'Secondary Contact - Phone',
+        type: 'text',
+        dependsOn: { field: 'has_secondary_contact', value: 'yes' },
+      },
+      {
+        name: 'has_tech_contact',
+        label: 'Do you have a dedicated technical/IT contact?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes, dedicated IT' },
+          { value: 'external', label: 'Yes, external IT company' },
+          { value: 'no', label: 'No, primary contact handles IT' },
+        ],
+      },
+      {
+        name: 'tech_contact_name',
+        label: 'Technical Contact - Full Name',
+        type: 'text',
+        dependsOn: { field: 'has_tech_contact', value: 'yes' },
+      },
+      {
+        name: 'tech_contact_email',
+        label: 'Technical Contact - Email',
+        type: 'email',
+        dependsOn: { field: 'has_tech_contact', value: 'yes' },
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 3: BUSINESS OVERVIEW (from v1 steps 4+5+6)
+  // Removed: location_type, how_long_at_location, firm_size
+  // Deferred: year_founded
+  // -----------------------------------------------
+  {
+    key: 'business_overview',
+    title: 'Business Overview',
+    shortTitle: 'BUSINESS',
+    description: 'Tell us about your business.',
+    estimatedTime: '2 min',
+    icon: STEP_ICONS.building,
+    fields: [
+      { name: 'business_name', label: 'Business Name', type: 'text', required: true, placeholder: 'Smith & Associates Law Firm' },
+      { name: 'website_url', label: 'Main Website URL', type: 'url', required: true, placeholder: 'https://example.com' },
+      { name: 'business_phone', label: 'Main Business Phone', type: 'tel', required: true, placeholder: '(555) 123-4567' },
+      { name: 'physical_address', label: 'Physical Company Address', type: 'textarea', required: true, placeholder: '123 Main St, Suite 100\nCity, State ZIP' },
+      {
+        name: 'languages',
+        label: 'Languages spoken at your firm',
+        type: 'multiselect',
+        options: [
+          { value: 'english', label: 'English' },
+          { value: 'spanish', label: 'Spanish' },
+          { value: 'chinese', label: 'Chinese' },
+          { value: 'vietnamese', label: 'Vietnamese' },
+          { value: 'korean', label: 'Korean' },
+          { value: 'tagalog', label: 'Tagalog' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+      { name: 'owner_names', label: 'Owner/Main Partner(s) Names', type: 'textarea', placeholder: 'List owner or partner names' },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 4: GOALS & STRATEGY (from v1 steps 7+8)
+  // Deferred: current_lead_volume, target_lead_volume
+  // -----------------------------------------------
+  {
+    key: 'goals_strategy',
+    title: 'Goals & Strategy',
+    shortTitle: 'GOALS',
+    description: 'Help us understand what success looks like.',
+    estimatedTime: '2 min',
+    icon: STEP_ICONS.target,
+    fields: [
+      {
+        name: 'primary_goal',
+        label: 'What is your #1 goal for working with us?',
+        type: 'radio',
+        options: [
+          { value: 'more_leads', label: 'Get more leads' },
+          { value: 'better_leads', label: 'Better quality leads' },
+          { value: 'brand_awareness', label: 'Brand awareness' },
+          { value: 'stay_competitive', label: 'Stay competitive' },
+          { value: 'all', label: 'All of the above' },
+        ],
+      },
+      {
+        name: 'success_definition',
+        label: 'What would make this a success in 12 months?',
+        type: 'textarea',
+        required: true,
+        placeholder: 'Be specific — e.g., "20 new signed clients per month" or "rank top 3 for personal injury in Dallas"',
+      },
+      {
+        name: 'current_challenges',
+        label: 'What is your biggest marketing challenge right now?',
+        type: 'textarea',
+        placeholder: 'What have you tried that isn\'t working?',
+      },
+      {
+        name: 'important_metrics',
+        label: 'Which metrics matter most to you?',
+        type: 'multiselect',
+        options: [
+          { value: 'website_traffic', label: 'Website traffic' },
+          { value: 'phone_calls', label: 'Phone calls' },
+          { value: 'form_submissions', label: 'Form submissions' },
+          { value: 'signed_clients', label: 'Signed clients' },
+          { value: 'rankings', label: 'Rankings' },
+          { value: 'reviews', label: 'Reviews' },
+          { value: 'revenue', label: 'Revenue' },
+        ],
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 5: BRAND & DESIGN (from v1 steps 9+10)
+  // Removed: has_logo_files
+  // -----------------------------------------------
+  {
+    key: 'brand_design',
+    title: 'Brand & Design',
+    shortTitle: 'BRAND',
+    description: 'Help us maintain your visual identity.',
+    estimatedTime: '2 min',
+    icon: STEP_ICONS.palette,
+    fields: [
+      {
+        name: 'has_brand_guide',
+        label: 'Do you have a brand style guide?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'some', label: 'Some guidelines' },
+          { value: 'no', label: 'No' },
+        ],
+      },
+      {
+        name: 'knows_brand_colors',
+        label: 'Do you know your brand color hex codes?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes, I know them' },
+          { value: 'no', label: 'No, pull from website' },
+        ],
+      },
+      {
+        name: 'primary_color',
+        label: 'Primary Brand Color (Hex)',
+        type: 'text',
+        placeholder: '#1A2B3C',
+        dependsOn: { field: 'knows_brand_colors', value: 'yes' },
+      },
+      {
+        name: 'secondary_color',
+        label: 'Secondary Brand Color (Hex)',
+        type: 'text',
+        placeholder: '#4D5E6F',
+        dependsOn: { field: 'knows_brand_colors', value: 'yes' },
+      },
+      {
+        name: 'typography_fonts',
+        label: 'What fonts does your brand use?',
+        type: 'text',
+        placeholder: 'e.g., Montserrat, Open Sans',
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 6: TECHNICAL SETUP (from v1 steps 11+12+13)
+  // -----------------------------------------------
+  {
+    key: 'technical_setup',
+    title: 'Technical Setup',
+    shortTitle: 'TECH',
+    description: 'Tell us about your website and tracking setup.',
+    estimatedTime: '3 min',
+    icon: STEP_ICONS.computerDesktop,
+    fields: [
+      {
+        name: 'owns_domain',
+        label: 'Do you own your domain?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'domain_registrar',
+        label: 'Where is your domain registered?',
+        type: 'select',
+        options: [
+          { value: 'godaddy', label: 'GoDaddy' },
+          { value: 'namecheap', label: 'Namecheap' },
+          { value: 'google', label: 'Google Domains' },
+          { value: 'cloudflare', label: 'Cloudflare' },
+          { value: 'network_solutions', label: 'Network Solutions' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+      {
+        name: 'controls_dns',
+        label: 'Do you have access to DNS settings?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'website_platform',
+        label: 'What platform is your website built on?',
+        type: 'radio',
+        options: [
+          { value: 'wordpress', label: 'WordPress' },
+          { value: 'squarespace', label: 'Squarespace' },
+          { value: 'wix', label: 'Wix' },
+          { value: 'webflow', label: 'Webflow' },
+          { value: 'custom', label: 'Custom' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'website_managed_by',
+        label: 'Who currently manages your website?',
+        type: 'radio',
+        options: [
+          { value: 'internal', label: 'Internal team' },
+          { value: 'another_agency', label: 'Another agency' },
+          { value: 'freelancer', label: 'Freelancer' },
+          { value: 'no_one', label: 'No one' },
+        ],
+      },
+      {
+        name: 'uses_call_tracking',
+        label: 'Do you use call tracking?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'call_tracking_provider',
+        label: 'Which call tracking provider?',
+        type: 'select',
+        dependsOn: { field: 'uses_call_tracking', value: 'yes' },
+        options: [
+          { value: 'callrail', label: 'CallRail' },
+          { value: 'ctm', label: 'CTM' },
+          { value: 'marchex', label: 'Marchex' },
+          { value: 'other', label: 'Other' },
+        ],
+      },
+      {
+        name: 'form_submission_destinations',
+        label: 'Where should form submissions go?',
+        type: 'textarea',
+        placeholder: 'e.g., john@firm.com, CRM integration, etc.',
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 7: SEO & TARGETING (from v1 steps 14+15+16)
+  // Removed: has_multiple_locations, current_review_count, current_rating
+  // -----------------------------------------------
+  {
+    key: 'seo_targeting',
+    title: 'SEO & Targeting',
+    shortTitle: 'SEO',
+    description: 'Where do you want to be found and for what?',
+    estimatedTime: '3 min',
+    icon: STEP_ICONS.magnifyingGlass,
+    fields: [
+      {
+        name: 'service_area_type',
+        label: 'How would you describe your service area?',
+        type: 'radio',
+        options: [
+          { value: 'local', label: 'Local' },
+          { value: 'regional', label: 'Regional' },
+          { value: 'statewide', label: 'Statewide' },
+          { value: 'national', label: 'National' },
+        ],
+      },
+      {
+        name: 'main_geographical_areas',
+        label: 'What cities or areas do you want to target?',
+        type: 'textarea',
+        required: true,
+        placeholder: 'e.g., Dallas, Fort Worth, Plano, Arlington',
+      },
+      {
+        name: 'primary_case_types_keywords',
+        label: 'What are your primary case types or services?',
+        type: 'textarea',
+        required: true,
+        placeholder: 'e.g., Personal Injury, Car Accidents, Slip and Fall',
+      },
+      {
+        name: 'case_priority',
+        label: 'Which case type should we focus on first?',
+        type: 'text',
+        placeholder: 'e.g., Car Accidents',
+      },
+      {
+        name: 'cases_to_avoid',
+        label: 'Any case types you want to avoid?',
+        type: 'textarea',
+        placeholder: 'e.g., Workers Comp, Criminal Defense',
+      },
+      {
+        name: 'has_gbp',
+        label: 'Do you have a Google Business Profile?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'gbp_listing_url',
+        label: 'Google Business Profile URL',
+        type: 'url',
+        placeholder: 'https://business.google.com/...',
+        dependsOn: { field: 'has_gbp', value: 'yes' },
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 8: LEGAL, CONTENT & COMMUNICATION (from v1 steps 17+18+19)
+  // Deferred: additional_report_recipients
+  // -----------------------------------------------
+  {
+    key: 'legal_content_comms',
+    title: 'Legal, Content & Communication',
+    shortTitle: 'LEGAL',
+    description: 'How should we work together?',
+    estimatedTime: '3 min',
+    icon: STEP_ICONS.scale,
+    fields: [
+      {
+        name: 'has_advertising_restrictions',
+        label: 'Are there special advertising rules for your industry?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'advertising_regulations',
+        label: 'What restrictions apply?',
+        type: 'textarea',
+        placeholder: 'e.g., state bar rules, disclaimers, etc.',
+        dependsOn: { field: 'has_advertising_restrictions', value: 'yes' },
+      },
+      {
+        name: 'legal_disclaimers',
+        label: 'Any required legal disclaimers for your marketing?',
+        type: 'textarea',
+        placeholder: 'Paste any disclaimers that must appear on your marketing materials.',
+      },
+      {
+        name: 'content_approval_required',
+        label: 'Do you want to approve content before it goes live?',
+        type: 'radio',
+        options: [
+          { value: 'yes_all', label: 'Yes, approve all content' },
+          { value: 'major_only', label: 'Major pieces only' },
+          { value: 'trust', label: 'Trust your judgment' },
+        ],
+      },
+      {
+        name: 'words_phrases_to_avoid',
+        label: 'Any words or phrases we should avoid?',
+        type: 'textarea',
+        placeholder: 'e.g., "cheap", "aggressive", specific competitor names',
+      },
+      {
+        name: 'topics_to_avoid',
+        label: 'Any topics we should avoid?',
+        type: 'textarea',
+        placeholder: 'Topics your firm does not want associated with its brand.',
+      },
+      {
+        name: 'preferred_communication',
+        label: 'What is your preferred communication method?',
+        type: 'radio',
+        options: [
+          { value: 'email', label: 'Email' },
+          { value: 'phone', label: 'Phone' },
+          { value: 'text', label: 'Text' },
+          { value: 'slack_teams', label: 'Slack/Teams' },
+        ],
+      },
+      {
+        name: 'call_frequency_preference',
+        label: 'How often would you like to meet?',
+        type: 'radio',
+        options: [
+          { value: 'weekly', label: 'Weekly' },
+          { value: 'biweekly', label: 'Biweekly' },
+          { value: 'monthly', label: 'Monthly' },
+          { value: 'quarterly', label: 'Quarterly' },
+        ],
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 9: ACCESS CHECKLIST (from v1 steps 20-26)
+  // Deferred: has_lsa, lsa_customer_ids
+  // Custom component: AccessChecklistStep
+  // -----------------------------------------------
+  {
+    key: 'access_checklist',
+    title: 'Access Checklist',
+    shortTitle: 'ACCESS',
+    description: 'Grant Clixsy access to your accounts. You can come back and update these later.',
+    estimatedTime: '5 min',
+    icon: STEP_ICONS.key,
+    fields: [
+      {
+        name: 'has_google_analytics',
+        label: 'Do you have Google Analytics set up?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+          { value: 'not_sure', label: 'Not sure' },
+        ],
+      },
+      {
+        name: 'ga_access_status',
+        label: 'Google Analytics access status',
+        type: 'select',
+        dependsOn: { field: 'has_google_analytics', value: 'yes' },
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'gsc_access_status',
+        label: 'Google Search Console access status',
+        type: 'select',
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'gbp_access_status',
+        label: 'Google Business Profile access status',
+        type: 'select',
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'wordpress_access_status',
+        label: 'WordPress access status',
+        type: 'select',
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'domain_access_status',
+        label: 'Domain registrar access status',
+        type: 'select',
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'dns_access_status',
+        label: 'DNS access status',
+        type: 'select',
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+          { value: 'not_applicable', label: 'Not applicable' },
+        ],
+      },
+      {
+        name: 'has_youtube',
+        label: 'Do you have a YouTube channel?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+        ],
+      },
+      {
+        name: 'youtube_access_status',
+        label: 'YouTube access status',
+        type: 'select',
+        dependsOn: { field: 'has_youtube', value: 'yes' },
+        options: [
+          { value: 'done', label: 'Done — access granted' },
+          { value: 'later', label: "I'll do this later" },
+          { value: 'need_help', label: 'I need help' },
+        ],
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 10: TRANSITION & WRAP-UP (from v1 steps 27+28)
+  // Removed: shipping_preference
+  // -----------------------------------------------
+  {
+    key: 'transition_wrapup',
+    title: 'Transition & Wrap-up',
+    shortTitle: 'WRAP-UP',
+    description: 'Previous agency and welcome gift.',
+    estimatedTime: '2 min',
+    icon: STEP_ICONS.arrowPath,
+    fields: [
+      {
+        name: 'has_previous_agency',
+        label: 'Are you currently working with another marketing agency?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes' },
+          { value: 'no', label: 'No' },
+        ],
+      },
+      {
+        name: 'previous_agency_contact',
+        label: 'Previous agency contact info',
+        type: 'textarea',
+        placeholder: 'Agency name, contact person, email',
+        dependsOn: { field: 'has_previous_agency', value: 'yes' },
+      },
+      {
+        name: 'can_remove_agency_access',
+        label: 'Would you like us to help remove their access?',
+        type: 'radio',
+        dependsOn: { field: 'has_previous_agency', value: 'yes' },
+        options: [
+          { value: 'yes', label: 'Yes please' },
+          { value: 'no', label: "I'll handle it" },
+          { value: 'wait', label: 'Wait until transition complete' },
+        ],
+      },
+      {
+        name: 'wants_welcome_gift',
+        label: 'Would you like to receive a welcome gift?',
+        type: 'radio',
+        options: [
+          { value: 'yes', label: 'Yes please!' },
+          { value: 'no', label: 'No thank you' },
+        ],
+      },
+      {
+        name: 'gift_recipient_name',
+        label: 'Recipient Name',
+        type: 'text',
+        dependsOn: { field: 'wants_welcome_gift', value: 'yes' },
+      },
+      {
+        name: 'gift_shipping_address',
+        label: 'Shipping Address',
+        type: 'textarea',
+        placeholder: '123 Main St, Suite 100\nCity, State ZIP',
+        dependsOn: { field: 'wants_welcome_gift', value: 'yes' },
+      },
+    ],
+  },
+
+  // -----------------------------------------------
+  // STEP 11: REVIEW (from v1 step 29)
+  // -----------------------------------------------
+  {
+    key: 'review',
+    title: 'Almost There!',
+    shortTitle: 'REVIEW',
+    description: "Let's make sure everything looks good before submitting.",
+    isReviewStep: true,
+    icon: STEP_ICONS.clipboardCheck,
+    fields: [],
+  },
+
+  // -----------------------------------------------
+  // STEP 12: SUBMIT (from v1 step 30)
+  // -----------------------------------------------
+  {
+    key: 'submit',
+    title: 'Ready to Submit',
+    shortTitle: 'SUBMIT',
+    description: 'Confirm and submit your onboarding information.',
+    icon: STEP_ICONS.check,
+    fields: [
+      {
+        name: 'confirm_accuracy',
+        label: 'I confirm that the information provided is accurate to the best of my knowledge.',
+        type: 'checkbox',
+      },
+      {
+        name: 'confirm_proceed',
+        label: 'I authorize Clixsy to proceed with setting up my accounts and marketing services.',
+        type: 'checkbox',
+      },
+      {
+        name: 'additional_notes',
+        label: 'Anything else you\'d like us to know?',
+        type: 'textarea',
+        placeholder: 'Any additional information, questions, or special requests.',
+      },
+    ],
+  },
+];
+
+// =============================================
+// V2 VALIDATION SCHEMAS
+// =============================================
+
+const stepValidationSchemasV2: Record<string, z.ZodSchema> = {
+  primary_contact: z.object({
+    main_contact_name: z.string().min(1, 'Full name is required'),
+    main_contact_title: z.string().min(1, 'Title/Role is required'),
+    main_contact_email: z.string().email('Please enter a valid email'),
+    main_contact_phone: z.string().min(1, 'Phone number is required'),
+  }).passthrough(),
+
+  other_contacts: z.object({}).passthrough(),
+
+  business_overview: z.object({
+    business_name: z.string().min(1, 'Business name is required'),
+    website_url: z.string().min(1, 'Website URL is required'),
+    business_phone: z.string().min(1, 'Business phone is required'),
+    physical_address: z.string().min(1, 'Physical address is required'),
+  }).passthrough(),
+
+  goals_strategy: z.object({
+    success_definition: z.string().min(1, 'Please describe what success looks like'),
+  }).passthrough(),
+
+  brand_design: z.object({}).passthrough(),
+
+  technical_setup: z.object({}).passthrough(),
+
+  seo_targeting: z.object({
+    main_geographical_areas: z.string().min(1, 'Please enter your target areas'),
+    primary_case_types_keywords: z.string().min(1, 'Please enter your primary case types'),
+  }).passthrough(),
+
+  legal_content_comms: z.object({}).passthrough(),
+
+  access_checklist: z.object({}).passthrough(),
+
+  transition_wrapup: z.object({}).passthrough(),
+
+  review: z.object({}).passthrough(),
+
+  submit: z.object({}).passthrough(),
+};
+
+// =============================================
+// V2 VALIDATION FUNCTIONS
+// =============================================
+
+export function validateStepDataV2(
+  stepKey: string,
+  data: Record<string, unknown>
+): { success: boolean; errors?: Record<string, string> } {
+  const schema = stepValidationSchemasV2[stepKey];
+  if (!schema) {
+    return { success: true };
+  }
+
+  const result = schema.safeParse(data);
+  if (result.success) {
+    return { success: true };
+  }
+
+  const errors: Record<string, string> = {};
+  result.error.issues.forEach((issue) => {
+    const fieldName = issue.path[0] as string;
+    if (fieldName) {
+      errors[fieldName] = issue.message;
+    }
+  });
+
+  return { success: false, errors };
+}
+
+export function getMissingRequiredFieldsV2(
+  answers: Record<string, Record<string, unknown>>
+): { stepKey: string; stepTitle: string; stepIndex: number; fieldName: string; fieldLabel: string }[] {
+  const missing: { stepKey: string; stepTitle: string; stepIndex: number; fieldName: string; fieldLabel: string }[] = [];
+
+  onboardingStepsV2.forEach((step, index) => {
+    const stepAnswers = answers[step.key] || {};
+
+    step.fields.forEach((field) => {
+      if (!field.required) return;
+
+      // Check dependency — if field depends on another and that condition isn't met, skip
+      if (field.dependsOn) {
+        const depValue = stepAnswers[field.dependsOn.field];
+        if (depValue !== field.dependsOn.value) return;
+      }
+
+      const value = stepAnswers[field.name];
+      const isEmpty =
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0);
+
+      if (isEmpty) {
+        missing.push({
+          stepKey: step.key,
+          stepTitle: step.title,
+          stepIndex: index,
+          fieldName: field.name,
+          fieldLabel: field.label,
+        });
+      }
+    });
+  });
+
+  return missing;
+}

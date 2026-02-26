@@ -38,6 +38,7 @@ export default async function OnboardingPage({ params }: OnboardingPageProps) {
       initialStep={data.session.currentStep}
       initialAnswers={data.answers}
       sessionStatus={data.session.status}
+      flowVersion={data.session.flowVersion || 'v1'}
     />
   );
 }

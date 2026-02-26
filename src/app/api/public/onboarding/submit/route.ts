@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionByToken, getSessionAnswers, updateSessionStep, createAuditEvent } from '@/lib/supabase/server';
-import { onboardingSteps } from '@/lib/onboarding/steps';
+import { getStepsForVersion } from '@/lib/onboarding/flow-version';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
     const answeredSteps = new Set(answers.filter(a => a.completed).map(a => a.step_key));
 
     // Check required steps are completed (at minimum, first step and final review)
-    const requiredSteps = ['business_overview', 'final_review'];
+    const flowVersion = session.flow_version || 'v1';
+    const requiredSteps = flowVersion === 'v2'
+      ? ['primary_contact', 'submit']
+      : ['business_overview', 'final_review'];
     const missingSteps = requiredSteps.filter(step => !answeredSteps.has(step));
 
     if (missingSteps.length > 0) {
@@ -50,8 +53,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const steps = getStepsForVersion(flowVersion);
+
     // Update session status to submitted
-    const success = await updateSessionStep(session.id, onboardingSteps.length, 'submitted');
+    const success = await updateSessionStep(session.id, steps.length, 'submitted');
 
     if (!success) {
       return NextResponse.json(
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Create audit event
     await createAuditEvent(session.id, 'session_submitted', {
       totalStepsCompleted: answeredSteps.size,
-      totalSteps: onboardingSteps.length,
+      totalSteps: steps.length,
     });
 
     return NextResponse.json({
