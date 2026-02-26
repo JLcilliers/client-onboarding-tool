@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getStepsForVersion, validateStepDataForVersion, getMissingRequiredFieldsForVersion } from '@/lib/onboarding/flow-version';
 import StepRenderer from './StepRenderer';
-import SpinnerInterstitial from './SpinnerInterstitial';
+import StepTransition from './StepTransition';
 import AccessChecklistStep from './AccessChecklistStep';
 
 const CLIXSY_LOGO_URL = 'https://res.cloudinary.com/dovgh19xr/image/upload/v1766427227/new_logo_nvrux0.svg';
@@ -39,8 +39,14 @@ export default function Wizard({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [showSpinner, setShowSpinner] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Step transition animation state
+  const [transitioning, setTransitioning] = useState(false);
+  const [contentVisible, setContentVisible] = useState(true);
+  const [transitionAnimIndex, setTransitionAnimIndex] = useState(0);
+  const pendingStepRef = useRef<number | null>(null);
+  const pendingSubmitRef = useRef(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(sessionStatus === 'submitted');
 
@@ -138,6 +144,32 @@ export default function Wizard({
     }
   };
 
+  // Start a step transition animation
+  const startTransition = useCallback((targetStep: number, animIndex: number) => {
+    if (transitioning) return;
+    pendingStepRef.current = targetStep;
+    setTransitionAnimIndex(animIndex);
+    setContentVisible(false);           // fade out current content
+    // After fade-out, start overlay animation and swap step
+    setTimeout(() => {
+      setCurrentStepIndex(targetStep);
+      setTransitioning(true);           // show overlay animation
+    }, 200);
+  }, [transitioning]);
+
+  // Called when the overlay animation finishes
+  const handleTransitionDone = useCallback(() => {
+    setTransitioning(false);
+    setContentVisible(true);            // fade in new content
+    pendingStepRef.current = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // If we were submitting, do that now
+    if (pendingSubmitRef.current) {
+      pendingSubmitRef.current = false;
+    }
+  }, []);
+
   // Handle next step
   const handleNext = async () => {
     // Skip validation for review step
@@ -149,33 +181,25 @@ export default function Wizard({
       }
     }
 
-    // Show spinner
-    setShowSpinner(true);
-
     // Save with completed = true
     const saved = await saveStep(true);
 
     if (!saved) {
-      setShowSpinner(false);
       return;
     }
-  };
 
-  // Handle spinner complete - move to next step
-  const handleSpinnerComplete = () => {
-    setShowSpinner(false);
+    // Start the transition animation
     if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      startTransition(currentStepIndex + 1, currentStepIndex);
     }
   };
 
   // Handle previous step
   const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
+    if (currentStepIndex > 0 && !transitioning) {
       setErrors({});
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Use the animation for the step we're going back to
+      startTransition(currentStepIndex - 1, currentStepIndex - 1);
     }
   };
 
@@ -201,11 +225,9 @@ export default function Wizard({
     }
 
     // Save final step first
-    setShowSpinner(true);
     const saved = await saveStep(true);
 
     if (!saved) {
-      setShowSpinner(false);
       return;
     }
 
@@ -226,8 +248,6 @@ export default function Wizard({
       setIsSubmitted(true);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Failed to submit. Please try again.');
-    } finally {
-      setShowSpinner(false);
     }
   };
 
@@ -430,14 +450,12 @@ export default function Wizard({
 
   return (
     <>
-      {/* Spinner Interstitial */}
-      {showSpinner && (
-        <SpinnerInterstitial
-          message="Saving your progress..."
-          duration={1200}
-          onComplete={handleSpinnerComplete}
-        />
-      )}
+      {/* Step Transition Animation Overlay */}
+      <StepTransition
+        active={transitioning}
+        animationIndex={transitionAnimIndex}
+        onDone={handleTransitionDone}
+      />
 
       <div className="min-h-screen bg-[#F4F5F6] flex flex-col">
         {/* Header */}
@@ -541,7 +559,14 @@ export default function Wizard({
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6">
+        <main
+          className="flex-1 max-w-4xl w-full mx-auto px-4 py-6"
+          style={{
+            opacity: contentVisible ? 1 : 0,
+            transform: contentVisible ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 0.5s ease, transform 0.5s ease',
+          }}
+        >
           {/* Step Title */}
           <div className="text-center mb-4">
             <h1 className="text-2xl font-extrabold text-[#0B0B0B] mb-1">
@@ -598,9 +623,9 @@ export default function Wizard({
             {/* Back Button */}
             <button
               onClick={handlePrevious}
-              disabled={currentStepIndex === 0}
+              disabled={currentStepIndex === 0 || transitioning}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
-                currentStepIndex === 0
+                currentStepIndex === 0 || transitioning
                   ? 'text-[#A0A0A0] cursor-not-allowed'
                   : 'text-[#0B0B0B] border border-[#E6E8EA] hover:bg-[#F4F5F6]'
               }`}
@@ -635,7 +660,7 @@ export default function Wizard({
             {currentStepIndex === steps.length - 1 ? (
               <button
                 onClick={handleSubmit}
-                disabled={isSaving || !canSubmit}
+                disabled={isSaving || !canSubmit || transitioning}
                 className={`flex items-center gap-2 px-8 py-3 rounded-lg font-semibold transition-all ${
                   canSubmit
                     ? 'bg-[#25DC7F] text-white hover:bg-[#1DB96A]'
@@ -650,7 +675,7 @@ export default function Wizard({
             ) : (
               <button
                 onClick={handleNext}
-                disabled={isSaving}
+                disabled={isSaving || transitioning}
                 className="flex items-center gap-2 px-8 py-3 bg-[#25DC7F] text-white rounded-lg font-semibold hover:bg-[#1DB96A] transition-all disabled:opacity-50"
               >
                 Next
