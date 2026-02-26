@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ACCESS_ITEMS } from '@/lib/onboarding/accessChecklist';
 
 interface AccessChecklistStepProps {
@@ -20,6 +21,44 @@ const YOUTUBE_STATUS_OPTIONS = [
   { value: 'later', label: "I'll do this later" },
   { value: 'need_help', label: 'I need help' },
 ];
+
+// Tutorial videos for each access service (from v1 steps 20-25)
+const TUTORIAL_VIDEOS: Record<string, { url: string; title: string }> = {
+  ga: {
+    url: 'https://youtu.be/8nWZRo_l8bs',
+    title: 'Tutorial - How to add admin user to Google Analytics',
+  },
+  gsc: {
+    url: 'https://youtu.be/17KmgnPz-K4',
+    title: 'Tutorial - How to add admin user to Google Search Console',
+  },
+  gbp: {
+    url: 'https://youtu.be/0Vb6v8YA3AY?si=PD9PU-VYRP-n1yLz',
+    title: 'Tutorial - How to add admin user to Google Business Profile',
+  },
+  wordpress: {
+    url: 'https://youtu.be/pxB2YB1578Q',
+    title: 'Tutorial - How to grant admin access to WordPress',
+  },
+  domain: {
+    url: 'https://youtu.be/ProhJAnO9ms',
+    title: 'Tutorial - How to delegate access to Domain Registrar',
+  },
+  dns: {
+    url: 'https://youtu.be/s7AS0XYR0KI',
+    title: 'Tutorial - How to delegate access to Cloudflare',
+  },
+};
+
+// Helper function to convert YouTube URL to embed URL
+function getYouTubeEmbedUrl(url: string): string | null {
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  const longMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/);
+  if (longMatch) return `https://www.youtube.com/embed/${longMatch[1]}`;
+  if (url.includes('youtube.com/embed/')) return url.split('?')[0];
+  return null;
+}
 
 // Map access keys to v2 field keys and display config
 const CHECKLIST_ROWS: {
@@ -51,6 +90,7 @@ const CHECKLIST_ROWS: {
 export default function AccessChecklistStep({ values, errors, onChange }: AccessChecklistStepProps) {
   const hasGA = values.has_google_analytics as string;
   const hasYT = values.has_youtube as string;
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -136,12 +176,30 @@ export default function AccessChecklistStep({ values, errors, onChange }: Access
 
             const currentStatus = (values[row.statusField] as string) || '';
 
+            const tutorial = TUTORIAL_VIDEOS[row.accessKey];
+            const isVideoExpanded = expandedVideo === row.accessKey;
+            const embedUrl = tutorial ? getYouTubeEmbedUrl(tutorial.url) : null;
+
             return (
               <div key={row.accessKey}>
                 {/* Desktop row */}
                 <div className="hidden md:grid grid-cols-[1fr_1.5fr_200px] items-center px-4 py-3 gap-4">
-                  <div className="font-medium text-[#0B0B0B] text-sm">
-                    {row.label}
+                  <div>
+                    <div className="font-medium text-[#0B0B0B] text-sm">
+                      {row.label}
+                    </div>
+                    {tutorial && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandedVideo(isVideoExpanded ? null : row.accessKey)}
+                        className="inline-flex items-center gap-1.5 mt-1 text-xs text-[#25DC7F] hover:text-[#1eb86a] font-medium transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                        </svg>
+                        {isVideoExpanded ? 'Hide tutorial' : 'Watch tutorial'}
+                      </button>
+                    )}
                   </div>
                   <div className="text-sm text-[#6B6B6B]">
                     {row.whatWeNeed}
@@ -168,6 +226,27 @@ export default function AccessChecklistStep({ values, errors, onChange }: Access
                   </div>
                 </div>
 
+                {/* Expanded video (desktop) */}
+                {isVideoExpanded && embedUrl && (
+                  <div className="hidden md:block px-4 pb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-5 h-5 text-[#E5484D]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                      </svg>
+                      <span className="text-sm font-semibold text-[#0B0B0B]">{tutorial.title}</span>
+                    </div>
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-[#E6E8EA] bg-black max-w-2xl">
+                      <iframe
+                        src={embedUrl}
+                        title={tutorial.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Mobile card */}
                 <div className="md:hidden p-4 space-y-2">
                   <div className="font-medium text-[#0B0B0B] text-sm">
@@ -176,6 +255,32 @@ export default function AccessChecklistStep({ values, errors, onChange }: Access
                   <div className="text-xs text-[#6B6B6B]">
                     {row.whatWeNeed}
                   </div>
+                  {tutorial && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedVideo(isVideoExpanded ? null : row.accessKey)}
+                      className="inline-flex items-center gap-1.5 text-xs text-[#25DC7F] hover:text-[#1eb86a] font-medium transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                      </svg>
+                      {isVideoExpanded ? 'Hide tutorial' : 'Watch tutorial'}
+                    </button>
+                  )}
+                  {/* Expanded video (mobile) */}
+                  {isVideoExpanded && embedUrl && (
+                    <div className="pt-1">
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-[#E6E8EA] bg-black">
+                        <iframe
+                          src={embedUrl}
+                          title={tutorial.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full"
+                        />
+                      </div>
+                    </div>
+                  )}
                   <select
                     value={currentStatus}
                     onChange={e => onChange(row.statusField, e.target.value)}
