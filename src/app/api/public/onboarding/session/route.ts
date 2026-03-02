@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionByToken, getSessionAnswers, getSignedLogoUrl, createAuditEvent } from '@/lib/supabase/server';
+import { getSessionByToken, getSessionAnswers, getSignedLogoUrl, createAuditEvent, getClientById } from '@/lib/supabase/server';
 import { getStepsForVersion } from '@/lib/onboarding/flow-version';
 
 export async function GET(request: NextRequest) {
@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Get client info for personalization
+    const client = await getClientById(session.client_id);
 
     // Get all answers for this session
     const answers = await getSessionAnswers(session.id);
@@ -59,6 +62,10 @@ export async function GET(request: NextRequest) {
         logoUrl,
         lastSavedAt: session.last_saved_at,
         submittedAt: session.submitted_at,
+      },
+      client: {
+        name: client?.client_name || '',
+        contactName: client?.primary_contact_name || '',
       },
       answers: answersByStep,
       steps: steps.map(step => ({

@@ -39,6 +39,8 @@ export default async function OnboardingPage({ params }: OnboardingPageProps) {
       initialAnswers={data.answers}
       sessionStatus={data.session.status}
       flowVersion={data.session.flowVersion || 'v1'}
+      clientName={data.client?.name || ''}
+      contactName={data.client?.contactName || ''}
     />
   );
 }

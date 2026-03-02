@@ -54,6 +54,22 @@ export interface Client {
 }
 
 // Helper functions for common operations
+export async function getClientById(clientId: string): Promise<Client | null> {
+  const supabase = createServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('id', clientId)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as Client;
+}
+
 export async function getSessionByToken(token: string): Promise<OnboardingSession | null> {
   const supabase = createServiceRoleClient();
 

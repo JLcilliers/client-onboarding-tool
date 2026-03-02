@@ -5,6 +5,8 @@ import { getStepsForVersion, validateStepDataForVersion, getMissingRequiredField
 import StepRenderer from './StepRenderer';
 import StepTransition from './StepTransition';
 import AccessChecklistStep from './AccessChecklistStep';
+import { getTransitionMessage, getWelcomeMessage } from '@/lib/onboarding/transition-messages';
+import type { TransitionMessage } from '@/lib/onboarding/transition-messages';
 
 const CLIXSY_LOGO_URL = 'https://res.cloudinary.com/dovgh19xr/image/upload/v1766427227/new_logo_nvrux0.svg';
 
@@ -14,6 +16,8 @@ interface WizardProps {
   initialAnswers: Record<string, { answers: Record<string, unknown>; completed: boolean }>;
   sessionStatus: 'draft' | 'in_progress' | 'submitted';
   flowVersion?: 'v1' | 'v2';
+  clientName?: string;
+  contactName?: string;
 }
 
 export default function Wizard({
@@ -22,6 +26,8 @@ export default function Wizard({
   initialAnswers,
   sessionStatus,
   flowVersion = 'v1',
+  clientName = '',
+  contactName = '',
 }: WizardProps) {
   const steps = useMemo(() => getStepsForVersion(flowVersion), [flowVersion]);
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStep);
@@ -41,14 +47,15 @@ export default function Wizard({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Step transition animation state
+  // Step transition state
   const [transitioning, setTransitioning] = useState(false);
-  const [contentVisible, setContentVisible] = useState(true);
-  const [transitionAnimIndex, setTransitionAnimIndex] = useState(0);
+  const [contentVisible, setContentVisible] = useState(false); // start hidden for welcome
+  const [transitionMessage, setTransitionMessage] = useState<TransitionMessage | null>(null);
   const pendingStepRef = useRef<number | null>(null);
   const pendingSubmitRef = useRef(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(sessionStatus === 'submitted');
+  const [showWelcome, setShowWelcome] = useState(true);
 
   // Scroll navigation state
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -57,6 +64,42 @@ export default function Wizard({
 
   const currentStep = steps[currentStepIndex];
   const stepAnswers = answers[currentStep?.key] || {};
+
+  // Derive personalized names for interstitial messages
+  const contactFirstName = useMemo(() => {
+    // Prefer the name from answers if filled in, otherwise use session data
+    const fromAnswers = answers['primary_contact']?.main_contact_name as string | undefined;
+    const name = fromAnswers || contactName || '';
+    return name.split(' ')[0] || '';
+  }, [answers, contactName]);
+
+  const businessName = useMemo(() => {
+    // V1 uses business_basics, V2 uses business_overview
+    const fromV1 = answers['business_basics']?.business_name as string | undefined;
+    const fromV2 = answers['business_overview']?.business_name as string | undefined;
+    return fromV1 || fromV2 || clientName || '';
+  }, [answers, clientName]);
+
+  // Show welcome interstitial on first load
+  const isReturning = useMemo(() => {
+    return initialStep > 0 || Object.keys(initialAnswers).length > 0;
+  }, [initialStep, initialAnswers]);
+
+  useEffect(() => {
+    if (!showWelcome || isSubmitted) {
+      setContentVisible(true);
+      return;
+    }
+
+    const welcomeMsg = getWelcomeMessage(
+      contactName ? contactName.split(' ')[0] : '',
+      isReturning,
+    );
+    setTransitionMessage(welcomeMsg);
+    setTransitioning(true);
+
+    // Welcome will auto-dismiss via handleTransitionDone
+  }, []); // Only run on mount
 
   // Calculate missing required fields
   const missingFields = useMemo(() => {
@@ -144,23 +187,25 @@ export default function Wizard({
     }
   };
 
-  // Start a step transition animation
-  const startTransition = useCallback((targetStep: number, animIndex: number) => {
+  // Start a step transition with cheerleading message
+  const startTransition = useCallback((targetStep: number, message: TransitionMessage) => {
     if (transitioning) return;
     pendingStepRef.current = targetStep;
-    setTransitionAnimIndex(animIndex);
+    setTransitionMessage(message);
     setContentVisible(false);           // fade out current content
-    // After fade-out, start overlay animation and swap step
+    // After fade-out, start overlay and swap step
     setTimeout(() => {
       setCurrentStepIndex(targetStep);
-      setTransitioning(true);           // show overlay animation
+      setTransitioning(true);           // show interstitial
     }, 200);
   }, [transitioning]);
 
-  // Called when the overlay animation finishes
+  // Called when the interstitial finishes
   const handleTransitionDone = useCallback(() => {
     setTransitioning(false);
+    setTransitionMessage(null);
     setContentVisible(true);            // fade in new content
+    setShowWelcome(false);
     pendingStepRef.current = null;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -188,18 +233,31 @@ export default function Wizard({
       return;
     }
 
-    // Start the transition animation
+    // Show cheerleading interstitial and advance
     if (currentStepIndex < steps.length - 1) {
-      startTransition(currentStepIndex + 1, currentStepIndex);
+      const nextStep = steps[currentStepIndex + 1];
+      const message = getTransitionMessage(
+        currentStep.key,
+        nextStep.title,
+        contactFirstName,
+        businessName,
+        answers,
+        flowVersion,
+      );
+      startTransition(currentStepIndex + 1, message);
     }
   };
 
-  // Handle previous step
+  // Handle previous step (simple fade, no interstitial)
   const handlePrevious = () => {
     if (currentStepIndex > 0 && !transitioning) {
       setErrors({});
-      // Use the animation for the step we're going back to
-      startTransition(currentStepIndex - 1, currentStepIndex - 1);
+      setContentVisible(false);
+      setTimeout(() => {
+        setCurrentStepIndex(currentStepIndex - 1);
+        setContentVisible(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 300);
     }
   };
 
@@ -450,10 +508,10 @@ export default function Wizard({
 
   return (
     <>
-      {/* Step Transition Animation Overlay */}
+      {/* Step Transition Interstitial */}
       <StepTransition
         active={transitioning}
-        animationIndex={transitionAnimIndex}
+        message={transitionMessage}
         onDone={handleTransitionDone}
       />
 
